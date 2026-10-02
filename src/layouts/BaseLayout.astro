@@ -1,0 +1,80 @@
+---
+import Header from '../components/Header.astro';
+import CartDrawer from '../components/CartDrawer.astro';
+import '../styles/global.css';
+interface Props { title?: string; description?: string; image?: string; canonicalPath?: string; }
+const {
+  title = 'Tulstore | Todo lo que necesitas, en un solo lugar',
+  description = 'Descubre productos para hogar, cocina, tecnología, bienestar y mucho más. Compra fácil por WhatsApp en Tulstore.',
+  image = '/images/tulstore-logo.png',
+  canonicalPath = Astro.url.pathname
+} = Astro.props;
+const canonical = new URL(canonicalPath, Astro.site ?? Astro.url.origin);
+const socialImage = new URL(image, Astro.site ?? Astro.url.origin);
+---
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#16213E" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonical} />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:image" content={socialImage} />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:site_name" content="Tulstore" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="/images/tulstore-logo.png" />
+</head>
+<body>
+  <Header />
+  <main><slot /></main>
+  <footer class="footer">
+    <div class="container foot-grid">
+      <div><img src="/images/tulstore-logo.png" alt="Tulstore" /><p>Todo lo que necesitas, en un solo lugar.</p></div>
+      <div><strong>Comprar</strong><a href="/productos">Todos los productos</a><a href="/buscar">Buscar</a></div>
+      <div><strong>Atención</strong><a href="https://wa.me/573182022859" target="_blank" rel="noopener">WhatsApp</a><span>Colombia</span></div>
+    </div>
+    <div class="container copy">© {new Date().getFullYear()} Tulstore. Catálogo actualizado desde Tulstore Admin.</div>
+  </footer>
+  <CartDrawer />
+
+  <script>
+    const money = (value) => new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(value);
+    const KEY = 'tulstore_cart_v1';
+    const getCart = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; } };
+    const setCart = (cart) => { localStorage.setItem(KEY, JSON.stringify(cart)); renderCart(); };
+    function renderCart(){
+      const cart = getCart();
+      const count = cart.reduce((n,i)=>n+i.qty,0);
+      document.querySelectorAll('[data-cart-count]').forEach(el=>el.textContent=String(count));
+      const box=document.querySelector('[data-cart-items]');
+      const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
+      const totalEl=document.querySelector('[data-cart-total]'); if(totalEl) totalEl.textContent=money(total);
+      const checkout=document.querySelector('[data-cart-checkout]'); if(checkout) checkout.disabled=!cart.length;
+      if(!box) return;
+      if(!cart.length){ box.innerHTML='<p class="empty">Aún no has agregado productos.</p>'; return; }
+      box.innerHTML=cart.map((i,index)=>`<div class="cart-item"><img src="${i.image}" alt=""><div><strong>${i.name}</strong><small>${i.ref} · ${money(i.price)}</small><div class="qty"><button data-cart-minus="${index}">−</button><span>${i.qty}</span><button data-cart-plus="${index}">+</button></div></div><button class="remove" data-cart-remove="${index}" aria-label="Eliminar">×</button></div>`).join('');
+    }
+    function openCart(){document.querySelector('[data-cart-drawer]')?.classList.add('open');document.querySelector('[data-cart-overlay]')?.classList.add('open');document.body.style.overflow='hidden'}
+    function closeCart(){document.querySelector('[data-cart-drawer]')?.classList.remove('open');document.querySelector('[data-cart-overlay]')?.classList.remove('open');document.body.style.overflow=''}
+    document.addEventListener('click',(e)=>{
+      const el=e.target instanceof Element?e.target:null; if(!el)return;
+      const add=el.closest('[data-add-cart]'); if(add){ const product=JSON.parse(add.getAttribute('data-product')); const cart=getCart(); const found=cart.find(i=>i.id===product.id); found?found.qty++:cart.push({...product,qty:1}); setCart(cart); openCart(); return; }
+      if(el.closest('[data-cart-open]')) return openCart();
+      if(el.closest('[data-cart-close]')||el.closest('[data-cart-overlay]')) return closeCart();
+      const plus=el.closest('[data-cart-plus]'); const minus=el.closest('[data-cart-minus]'); const rem=el.closest('[data-cart-remove]');
+      if(plus||minus||rem){ const cart=getCart(); const target=plus||minus||rem; const idx=Number(target.getAttribute(plus?'data-cart-plus':minus?'data-cart-minus':'data-cart-remove')); if(rem)cart.splice(idx,1); else if(plus)cart[idx].qty++; else {cart[idx].qty--; if(cart[idx].qty<=0)cart.splice(idx,1)} setCart(cart); }
+    });
+    document.querySelector('[data-cart-checkout]')?.addEventListener('click',()=>{ const cart=getCart(); if(!cart.length)return; const lines=cart.map(i=>`• ${i.qty} x ${i.name} (${i.ref}) — ${money(i.price*i.qty)}`); const total=cart.reduce((s,i)=>s+i.price*i.qty,0); const msg=`Hola Tulstore, quiero hacer este pedido:\n\n${lines.join('\n')}\n\nTotal: ${money(total)}`; window.open(`https://wa.me/573182022859?text=${encodeURIComponent(msg)}`,'_blank'); });
+    renderCart();
+  </script>
+</body>
+</html>
+<style is:global>
+.footer{background:var(--navy);color:#fff;padding:38px 0 20px;margin-top:40px}.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:32px}.foot-grid>div{display:flex;flex-direction:column;gap:8px}.foot-grid img{width:160px;background:white;border-radius:12px;padding:5px}.foot-grid p,.foot-grid span{color:rgba(255,255,255,.72)}.foot-grid a{color:rgba(255,255,255,.86);text-decoration:none}.foot-grid a:hover{text-decoration:underline}.copy{border-top:1px solid rgba(255,255,255,.12);margin-top:25px;padding-top:18px;color:rgba(255,255,255,.62);font-size:.78rem}@media(max-width:680px){.foot-grid{grid-template-columns:1fr 1fr}.foot-grid>div:first-child{grid-column:1/-1}}
+</style>

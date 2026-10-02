@@ -1,0 +1,15 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { getProducts, getCategories } from '../../lib/catalog';
+const slug = Astro.params.slug || '';
+const products = await getProducts();
+const categories = await getCategories(products);
+const category = categories.find((item) => item.slug === slug);
+if (!category) return Astro.redirect('/productos', 302);
+const items = products.filter((p) => p.categoriaSlug === category.slug);
+---
+<BaseLayout title={`${category.name} | Tulstore`} description={`Explora productos de ${category.name} disponibles en Tulstore.`} canonicalPath={`/categoria/${category.slug}`}>
+  <div class="container page-shell"><div class="breadcrumbs"><a href="/">Inicio</a><span>›</span><a href="/productos">Productos</a><span>›</span><span>{category.name}</span></div><div class="head"><span class="badge">CATEGORÍA</span><h1>{category.name}</h1><p>{items.length} productos disponibles.</p></div><div class="product-grid">{items.map(product=><ProductCard product={product}/>)}</div></div>
+</BaseLayout>
+<style>.head{margin:28px 0}.head h1{font-size:clamp(2.2rem,5vw,4rem);letter-spacing:-.05em;color:var(--navy);margin:9px 0}.head p{margin:0;color:var(--ink-soft)}</style>

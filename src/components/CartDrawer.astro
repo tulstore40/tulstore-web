@@ -1,0 +1,12 @@
+<div class="overlay" data-cart-overlay></div>
+<aside class="cart" data-cart-drawer aria-label="Carrito" aria-hidden="true">
+  <div class="cart-head"><strong>Tu carrito</strong><button data-cart-close aria-label="Cerrar">×</button></div>
+  <div class="cart-items" data-cart-items><p class="empty">Aún no has agregado productos.</p></div>
+  <div class="cart-footer">
+    <div class="total"><span>Total</span><strong data-cart-total>$0</strong></div>
+    <button class="checkout" data-cart-checkout disabled>Finalizar por WhatsApp</button>
+  </div>
+</aside>
+<style is:global>
+.overlay{position:fixed;inset:0;background:rgba(22,33,62,.58);z-index:70;opacity:0;pointer-events:none;transition:.2s}.overlay.open{opacity:1;pointer-events:auto}.cart{position:fixed;right:0;top:0;height:100%;width:min(410px,100%);z-index:80;background:var(--paper);display:flex;flex-direction:column;transform:translateX(100%);transition:transform .23s ease;box-shadow:-15px 0 45px rgba(0,0,0,.12)}.cart.open{transform:none}.cart-head{background:var(--navy);color:#fff;padding:17px 20px;display:flex;justify-content:space-between;align-items:center;font-size:1.1rem}.cart-head button{border:0;background:none;color:#fff;font-size:1.8rem;line-height:1}.cart-items{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px}.empty{color:var(--ink-soft);text-align:center;padding:28px 12px}.cart-item{display:grid;grid-template-columns:64px 1fr auto;gap:10px;background:white;padding:10px;border-radius:14px;border:1px solid var(--line)}.cart-item img{width:64px;height:64px;object-fit:contain}.cart-item strong{font-size:.85rem;line-height:1.25;display:block}.cart-item small{color:var(--ink-soft)}.cart-item .qty{display:flex;align-items:center;gap:8px;margin-top:7px}.cart-item .qty button{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:white;font-weight:900}.remove{border:0;background:none;color:var(--coral-dark);align-self:start;font-size:1rem}.cart-footer{background:white;border-top:1px solid var(--line);padding:16px 18px 20px}.total{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}.total strong{font-size:1.35rem;color:var(--navy)}.checkout{width:100%;border:0;border-radius:999px;padding:14px;background:var(--whatsapp);font-weight:850;color:#083b20}.checkout:disabled{opacity:.45;cursor:default}
+</style>
