@@ -1,19 +1,41 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import ProductCard from '../components/ProductCard.astro';
+import HeroSection from '../components/home/HeroSection.astro';
+import CategorySection from '../components/home/CategorySection.astro';
+import ProductStripSection from '../components/home/ProductStripSection.astro';
+import CtaSection from '../components/home/CtaSection.astro';
 import { getProducts, getCategories } from '../lib/catalog';
+import { getSiteConfig, resolveFeatured } from '../lib/siteConfig';
+
+const config = await getSiteConfig();
 const products = await getProducts();
 const categories = await getCategories(products);
-const latest = [...products].sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||'')).slice(0,8);
-const featured = products.slice(0,8);
+
+// Alternate the background on consecutive product strips (first strip = alt).
+let stripIndex = 0;
 ---
 <BaseLayout>
-  <section class="hero"><div class="container hero-grid"><div class="hero-copy"><span class="eyebrow">TULSTORE · COLOMBIA</span><h1>Encuentra eso que no sabías que necesitabas.</h1><p>Hogar, tecnología, bienestar, regalos y mucho más en un solo lugar. Explora, arma tu carrito y finaliza tu pedido por WhatsApp.</p><div class="hero-actions"><a class="btn btn-coral" href="/productos">Explorar productos</a><a class="btn secondary" href="#categorias">Ver categorías</a></div><div class="trust"><span>✓ Compra directa</span><span>✓ Atención por WhatsApp</span><span>✓ Catálogo actualizado</span></div></div><div class="hero-visual"><div class="brand-panel"><img src="/images/tulstore-logo.png" alt="Tulstore" /><div class="mini-grid"><span>Hogar</span><span>Cocina</span><span>Tecnología</span><span>Infantil</span></div></div></div></div></section>
-  <section class="section" id="categorias"><div class="container"><div class="section-head"><div><h2>Explora por categoría</h2><p>Llega rápido a lo que estás buscando.</p></div><a class="text-link" href="/productos">Ver todo →</a></div><div class="category-grid">{categories.slice(0,8).map((category,index)=><a href={`/categoria/${category.slug}`} class="category-card"><span class="icon">{['⌂','♨','⚡','◉','✦','★','⌁','☼'][index%8]}</span><strong>{category.name}</strong><small>{category.count} productos</small></a>)}</div></div></section>
-  <section class="section alt"><div class="container"><div class="section-head"><div><h2>Explora Tulstore</h2><p>Una selección del catálogo disponible.</p></div><a class="text-link" href="/productos">Todos los productos →</a></div><div class="product-grid">{featured.map(product=><ProductCard product={product}/>)}</div></div></section>
-  <section class="section"><div class="container"><div class="section-head"><div><h2>Recién agregados</h2><p>Productos incorporados recientemente al catálogo.</p></div></div><div class="product-grid">{latest.slice(0,4).map(product=><ProductCard product={product}/>)}</div></div></section>
-  <section class="container cta"><div><span class="eyebrow">¿BUSCAS ALGO ESPECÍFICO?</span><h2>Cuéntanos qué necesitas.</h2><p>Si no encuentras un producto en el catálogo, escríbenos y te ayudamos a buscarlo.</p></div><a class="btn btn-wa" href="https://wa.me/573182022859?text=Hola%20Tulstore,%20estoy%20buscando%20un%20producto" target="_blank" rel="noopener">Escribir por WhatsApp</a></section>
+  {config.home.sections.map((section) => {
+    switch (section.type) {
+      case 'hero':
+        return <HeroSection data={section.data} />;
+      case 'categories':
+        return <CategorySection data={section.data} categories={categories} />;
+      case 'product-strip': {
+        const alt = stripIndex % 2 === 0;
+        stripIndex += 1;
+        return (
+          <ProductStripSection
+            title={section.data.title}
+            subtitle={section.data.subtitle}
+            seeAllHref={section.data.seeAllHref}
+            products={resolveFeatured(products, section.data.rule)}
+            alt={alt}
+          />
+        );
+      }
+      case 'cta':
+        return <CtaSection data={section.data} />;
+    }
+  })}
 </BaseLayout>
-<style>
-.hero{background:linear-gradient(135deg,var(--navy) 0%,#203264 63%,#114b62 100%);color:white;overflow:hidden}.hero-grid{min-height:510px;display:grid;grid-template-columns:1.08fr .92fr;align-items:center;gap:42px;padding-top:56px;padding-bottom:56px}.eyebrow{font-size:.76rem;letter-spacing:.13em;font-weight:900;color:var(--gold)}.hero h1{font-size:clamp(2.5rem,5vw,4.7rem);line-height:.98;letter-spacing:-.055em;margin:14px 0 20px;max-width:760px}.hero p{font-size:1.08rem;line-height:1.7;color:rgba(255,255,255,.82);max-width:650px}.hero-actions{display:flex;gap:10px;margin-top:25px}.secondary{background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.22)}.trust{display:flex;gap:20px;flex-wrap:wrap;color:rgba(255,255,255,.7);font-size:.82rem;margin-top:28px}.hero-visual{display:flex;justify-content:end}.brand-panel{background:white;border-radius:28px;box-shadow:0 30px 70px rgba(0,0,0,.22);padding:26px;transform:rotate(2deg);width:min(100%,430px)}.brand-panel img{display:block;width:100%;height:280px;object-fit:contain}.mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.mini-grid span{background:var(--paper);color:var(--navy);border-radius:10px;padding:10px;text-align:center;font-size:.78rem;font-weight:800}.category-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.category-card{background:white;border:1px solid var(--line);border-radius:18px;padding:18px;text-decoration:none;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:12px;transition:.18s}.category-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}.category-card .icon{grid-row:1/3;width:42px;height:42px;border-radius:12px;background:#fff3d2;color:var(--navy);display:grid;place-items:center;font-size:1.2rem;font-weight:900}.category-card strong{color:var(--navy);font-size:.92rem}.category-card small{color:var(--ink-soft);font-size:.74rem}.alt{background:#eef0f4}.cta{margin-top:20px;margin-bottom:70px;background:linear-gradient(135deg,#fff8e8,#fff);border:1px solid #f7dfaa;border-radius:24px;padding:30px 34px;display:flex;align-items:center;justify-content:space-between;gap:30px}.cta h2{font-size:2rem;color:var(--navy);margin:8px 0}.cta p{color:var(--ink-soft);margin:0}@media(max-width:900px){.hero-grid{grid-template-columns:1fr;min-height:auto}.hero-visual{justify-content:center}.brand-panel{width:min(100%,380px)}.category-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:680px){.hero-grid{padding-top:40px;padding-bottom:42px}.hero h1{font-size:2.55rem}.hero p{font-size:.96rem}.hero-actions{flex-direction:column;align-items:stretch}.trust{gap:10px 15px}.brand-panel{display:none}.category-grid{grid-template-columns:1fr 1fr;gap:9px}.category-card{padding:12px;column-gap:8px}.category-card .icon{width:36px;height:36px}.category-card strong{font-size:.8rem}.category-card small{font-size:.67rem}.cta{margin-bottom:40px;padding:24px;flex-direction:column;align-items:flex-start}.cta h2{font-size:1.55rem}}
-</style>

@@ -1,0 +1,33 @@
+---
+import type { CategorySectionConfig } from '../../lib/siteConfig';
+import type { Category } from '../../lib/catalog';
+const { data, categories } = Astro.props as { data: CategorySectionConfig; categories: Category[] };
+const icons = ['⌂', '♨', '⚡', '◉', '✦', '★', '⌁', '☼'];
+---
+<section class="section" id="categorias">
+  <div class="container">
+    <div class="section-head">
+      <div><h2>{data.title}</h2>{data.subtitle && <p>{data.subtitle}</p>}</div>
+      <a class="text-link" href={data.seeAllHref}>Ver todo →</a>
+    </div>
+    <div class="category-grid">
+      {categories.slice(0, data.limit).map((category, index) => (
+        <a href={`/categoria/${category.slug}`} class="category-card">
+          <span class="icon">{icons[index % icons.length]}</span>
+          <strong>{category.name}</strong>
+          <small>{category.count} productos</small>
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+<style>
+.category-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.category-card{background:white;border:1px solid var(--line);border-radius:18px;padding:18px;text-decoration:none;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:12px;transition:.18s}
+.category-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.category-card .icon{grid-row:1/3;width:42px;height:42px;border-radius:12px;background:#fff3d2;color:var(--navy);display:grid;place-items:center;font-size:1.2rem;font-weight:900}
+.category-card strong{color:var(--navy);font-size:.92rem}
+.category-card small{color:var(--ink-soft);font-size:.74rem}
+@media(max-width:900px){.category-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:680px){.category-grid{grid-template-columns:1fr 1fr;gap:9px}.category-card{padding:12px;column-gap:8px}.category-card .icon{width:36px;height:36px}.category-card strong{font-size:.8rem}.category-card small{font-size:.67rem}}
+</style>

@@ -1,7 +1,9 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import ProductCard from '../components/ProductCard.astro';
+import CatalogGrid from '../components/CatalogGrid.astro';
 import { getProducts, getCategories } from '../lib/catalog';
+import { getSiteConfig } from '../lib/siteConfig';
+const config = await getSiteConfig();
 const products = await getProducts();
 const categories = await getCategories(products);
 ---
@@ -9,8 +11,7 @@ const categories = await getCategories(products);
   <div class="container page-shell">
     <div class="breadcrumbs"><a href="/">Inicio</a><span>›</span><span>Productos</span></div>
     <div class="page-head"><div><span class="badge">CATÁLOGO</span><h1>Todos los productos</h1><p>Productos disponibles actualmente en Tulstore.</p></div><span class="count">{products.length} productos</span></div>
-    <div class="chips">{categories.map(c=><a href={`/categoria/${c.slug}`}>{c.name}</a>)}</div>
-    <div class="product-grid">{products.map(product=><ProductCard product={product}/>)}</div>
   </div>
+  <CatalogGrid products={products} categories={categories} config={config.catalog} />
 </BaseLayout>
-<style>.page-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin:26px 0}.page-head h1{font-size:clamp(2rem,5vw,3.6rem);letter-spacing:-.04em;color:var(--navy);margin:9px 0}.page-head p{color:var(--ink-soft);margin:0}.count{color:var(--ink-soft);font-size:.86rem}.chips{display:flex;gap:8px;overflow:auto;margin-bottom:22px;padding-bottom:5px}.chips a{flex:none;text-decoration:none;background:white;border:1px solid var(--line);border-radius:999px;padding:8px 12px;font-size:.8rem}.chips a:hover{background:var(--gold);border-color:var(--gold)}@media(max-width:680px){.page-head{align-items:start;flex-direction:column}.page-head h1{font-size:2.2rem}}</style>
+<style>.page-head{display:flex;align-items:end;justify-content:space-between;gap:20px;margin:26px 0}.page-head h1{font-size:clamp(2rem,5vw,3.6rem);letter-spacing:-.04em;color:var(--navy);margin:9px 0}.page-head p{color:var(--ink-soft);margin:0}.count{color:var(--ink-soft);font-size:.86rem}@media(max-width:680px){.page-head{align-items:start;flex-direction:column}.page-head h1{font-size:2.2rem}}</style>

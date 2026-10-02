@@ -1,13 +1,17 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import ProductCard from '../components/ProductCard.astro';
-import { getProducts } from '../lib/catalog';
+import CatalogGrid from '../components/CatalogGrid.astro';
+import { getProducts, getCategories } from '../lib/catalog';
+import { getSiteConfig } from '../lib/siteConfig';
 const q = (Astro.url.searchParams.get('q') || '').trim();
 const normalized = q.toLocaleLowerCase('es');
 const products = await getProducts();
 const results = !normalized ? [] : products.filter((p) => `${p.nombre} ${p.referencia} ${p.color} ${p.categoria}`.toLocaleLowerCase('es').includes(normalized));
+const config = await getSiteConfig();
+const categories = q && results.length > 0 ? await getCategories(products) : [];
 ---
 <BaseLayout title={q ? `${q} | Buscar en Tulstore` : 'Buscar productos | Tulstore'} description="Busca productos, referencias y categorías en Tulstore.">
-  <div class="container page-shell"><div class="breadcrumbs"><a href="/">Inicio</a><span>›</span><span>Buscar</span></div><div class="head"><span class="badge">BUSCADOR</span><h1>{q ? `Resultados para “${q}”` : 'Busca en Tulstore'}</h1><p>{q ? `${results.length} producto${results.length===1?'':'s'} encontrado${results.length===1?'':'s'}.` : 'Escribe en el buscador para encontrar productos.'}</p></div>{q && results.length > 0 && <div class="product-grid">{results.map(product=><ProductCard product={product}/>)}</div>}{q && results.length===0 && <div class="empty-state">No encontramos productos con esa búsqueda.</div>}</div>
+  <div class="container page-shell"><div class="breadcrumbs"><a href="/">Inicio</a><span>›</span><span>Buscar</span></div><div class="head"><span class="badge">BUSCADOR</span><h1>{q ? `Resultados para “${q}”` : 'Busca en Tulstore'}</h1><p>{q ? `${results.length} producto${results.length===1?'':'s'} encontrado${results.length===1?'':'s'}.` : 'Escribe en el buscador para encontrar productos.'}</p></div>{q && results.length===0 && <div class="empty-state">No encontramos productos con esa búsqueda.</div>}</div>
+  {q && results.length > 0 && <CatalogGrid products={results} categories={categories} config={config.catalog} />}
 </BaseLayout>
 <style>.head{margin:28px 0}.head h1{font-size:clamp(2rem,5vw,3.7rem);letter-spacing:-.045em;color:var(--navy);margin:9px 0}.head p{margin:0;color:var(--ink-soft)}</style>
