@@ -44,33 +44,34 @@ const socialImage = new URL(image, Astro.site ?? Astro.url.origin);
   <CartDrawer />
 
   <script>
-    const money = (value) => new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(value);
+    interface CartItem { id: string | number; name: string; ref: string; price: number; image: string; qty: number; }
+    const money = (value: number) => new Intl.NumberFormat('es-CO',{style:'currency',currency:'COP',maximumFractionDigits:0}).format(value);
     const KEY = 'tulstore_cart_v1';
-    const getCart = () => { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; } };
-    const setCart = (cart) => { localStorage.setItem(KEY, JSON.stringify(cart)); renderCart(); };
+    const getCart = (): CartItem[] => { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch { return []; } };
+    const setCart = (cart: CartItem[]) => { localStorage.setItem(KEY, JSON.stringify(cart)); renderCart(); };
     function renderCart(){
       const cart = getCart();
-      const count = cart.reduce((n,i)=>n+i.qty,0);
+      const count = cart.reduce((n: number, i: CartItem)=>n+i.qty,0);
       document.querySelectorAll('[data-cart-count]').forEach(el=>el.textContent=String(count));
       const box=document.querySelector('[data-cart-items]');
-      const total=cart.reduce((s,i)=>s+i.price*i.qty,0);
+      const total=cart.reduce((s: number, i: CartItem)=>s+i.price*i.qty,0);
       const totalEl=document.querySelector('[data-cart-total]'); if(totalEl) totalEl.textContent=money(total);
-      const checkout=document.querySelector('[data-cart-checkout]'); if(checkout) checkout.disabled=!cart.length;
+      const checkout=document.querySelector<HTMLButtonElement>('[data-cart-checkout]'); if(checkout) checkout.disabled=!cart.length;
       if(!box) return;
       if(!cart.length){ box.innerHTML='<p class="empty">Aún no has agregado productos.</p>'; return; }
-      box.innerHTML=cart.map((i,index)=>`<div class="cart-item"><img src="${i.image}" alt=""><div><strong>${i.name}</strong><small>${i.ref} · ${money(i.price)}</small><div class="qty"><button data-cart-minus="${index}">−</button><span>${i.qty}</span><button data-cart-plus="${index}">+</button></div></div><button class="remove" data-cart-remove="${index}" aria-label="Eliminar">×</button></div>`).join('');
+      box.innerHTML=cart.map((i: CartItem, index: number)=>`<div class="cart-item"><img src="${i.image}" alt=""><div><strong>${i.name}</strong><small>${i.ref} · ${money(i.price)}</small><div class="qty"><button data-cart-minus="${index}">−</button><span>${i.qty}</span><button data-cart-plus="${index}">+</button></div></div><button class="remove" data-cart-remove="${index}" aria-label="Eliminar">×</button></div>`).join('');
     }
     function openCart(){document.querySelector('[data-cart-drawer]')?.classList.add('open');document.querySelector('[data-cart-overlay]')?.classList.add('open');document.body.style.overflow='hidden'}
     function closeCart(){document.querySelector('[data-cart-drawer]')?.classList.remove('open');document.querySelector('[data-cart-overlay]')?.classList.remove('open');document.body.style.overflow=''}
     document.addEventListener('click',(e)=>{
       const el=e.target instanceof Element?e.target:null; if(!el)return;
-      const add=el.closest('[data-add-cart]'); if(add){ const product=JSON.parse(add.getAttribute('data-product')); const cart=getCart(); const found=cart.find(i=>i.id===product.id); found?found.qty++:cart.push({...product,qty:1}); setCart(cart); openCart(); return; }
+      const add=el.closest('[data-add-cart]'); if(add){ const raw=add.getAttribute('data-product'); if(!raw) return; const product=JSON.parse(raw) as Omit<CartItem,'qty'>; const cart=getCart(); const found=cart.find((i: CartItem)=>i.id===product.id); found?found.qty++:cart.push({...product,qty:1}); setCart(cart); openCart(); return; }
       if(el.closest('[data-cart-open]')) return openCart();
       if(el.closest('[data-cart-close]')||el.closest('[data-cart-overlay]')) return closeCart();
       const plus=el.closest('[data-cart-plus]'); const minus=el.closest('[data-cart-minus]'); const rem=el.closest('[data-cart-remove]');
-      if(plus||minus||rem){ const cart=getCart(); const target=plus||minus||rem; const idx=Number(target.getAttribute(plus?'data-cart-plus':minus?'data-cart-minus':'data-cart-remove')); if(rem)cart.splice(idx,1); else if(plus)cart[idx].qty++; else {cart[idx].qty--; if(cart[idx].qty<=0)cart.splice(idx,1)} setCart(cart); }
+      if(plus||minus||rem){ const cart=getCart(); const target=plus||minus||rem; if(!target) return; const idx=Number(target.getAttribute(plus?'data-cart-plus':minus?'data-cart-minus':'data-cart-remove')); if(rem)cart.splice(idx,1); else if(plus)cart[idx].qty++; else {cart[idx].qty--; if(cart[idx].qty<=0)cart.splice(idx,1)} setCart(cart); }
     });
-    document.querySelector('[data-cart-checkout]')?.addEventListener('click',()=>{ const cart=getCart(); if(!cart.length)return; const lines=cart.map(i=>`• ${i.qty} x ${i.name} (${i.ref}) — ${money(i.price*i.qty)}`); const total=cart.reduce((s,i)=>s+i.price*i.qty,0); const msg=`Hola Tulstore, quiero hacer este pedido:\n\n${lines.join('\n')}\n\nTotal: ${money(total)}`; window.open(`https://wa.me/573182022859?text=${encodeURIComponent(msg)}`,'_blank'); });
+    document.querySelector<HTMLButtonElement>('[data-cart-checkout]')?.addEventListener('click',()=>{ const cart=getCart(); if(!cart.length)return; const lines=cart.map((i: CartItem)=>`• ${i.qty} x ${i.name} (${i.ref}) — ${money(i.price*i.qty)}`); const total=cart.reduce((s: number, i: CartItem)=>s+i.price*i.qty,0); const msg=`Hola Tulstore, quiero hacer este pedido:\n\n${lines.join('\n')}\n\nTotal: ${money(total)}`; window.open(`https://wa.me/573182022859?text=${encodeURIComponent(msg)}`,'_blank'); });
     renderCart();
   </script>
 </body>
