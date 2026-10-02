@@ -35,12 +35,29 @@ const socialImage = new URL(image, Astro.site ?? Astro.url.origin);
   <main><slot /></main>
   <footer class="footer">
     <div class="container foot-grid">
-      <div><img src="/images/tulstore-logo.png" alt="Tulstore" /><p>Todo lo que necesitas, en un solo lugar.</p></div>
+      <div class="foot-brand">
+        <img src="/images/tulstore-logo.png" alt="Tulstore" />
+        <p>Todo lo que necesitas, en un solo lugar.</p>
+        <div class="socials">
+          <a href="https://www.instagram.com/tulstore_?stkn=MWFoNm1ydWZ5MDVzMQ==" target="_blank" rel="noopener" aria-label="Instagram de Tulstore">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.4"/><circle cx="12" cy="12" r="4.1"/><circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"/></svg>
+          </a>
+          <a href="https://www.tiktok.com/@tulstore6?_r=1&_t=ZS-9AE3WCBkWkm" target="_blank" rel="noopener" aria-label="TikTok de Tulstore">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3.2c.3 2.3 1.7 3.9 4 4.2v2.8c-1.4.1-2.8-.3-4-1.1v5.9c0 3-2.4 5.1-5.2 4.9-2.5-.2-4.4-2.3-4.3-4.8.1-2.5 2.3-4.5 4.8-4.3.3 0 .6.1.9.1v2.9c-.3-.1-.6-.2-.9-.2-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2V3.2H14z" fill="currentColor" stroke="none"/></svg>
+          </a>
+          <a href="https://wa.me/573182022859" target="_blank" rel="noopener" aria-label="WhatsApp de Tulstore">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.3a9.6 9.6 0 0 0-8.2 14.5L2.3 21.7l4.9-1.3A9.6 9.6 0 1 0 12 2.3zm0 1.8a7.8 7.8 0 0 1 6.6 12 7.8 7.8 0 0 1-9.8 2.4l-.4-.2-2.9.8.8-2.8-.2-.4A7.8 7.8 0 0 1 12 4.1zm-2.9 3.6c-.2 0-.5.1-.7.3-.3.3-.9.9-.9 2.1s.9 2.5 1 2.6c.1.2 1.8 2.8 4.4 3.8 2.2.9 2.6.7 3.1.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.6-.3c-.3-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.3-.1-1.1-.4-2-1.2-.7-.6-1.2-1.4-1.3-1.6-.1-.2 0-.4.1-.5l.4-.4c.1-.2.2-.3.2-.5l.1-.4c0-.2 0-.3-.1-.4l-.7-1.7c-.2-.4-.4-.4-.6-.4h-.1z" fill="currentColor" stroke="none"/></svg>
+          </a>
+        </div>
+      </div>
       <div><strong>Comprar</strong><a href="/productos">Todos los productos</a><a href="/buscar">Buscar</a></div>
       <div><strong>Atención</strong><a href="https://wa.me/573182022859" target="_blank" rel="noopener">WhatsApp</a><span>Colombia</span></div>
     </div>
-    <div class="container copy">© {new Date().getFullYear()} Tulstore. Catálogo actualizado desde Tulstore Admin.</div>
+    <div class="container copy">© {new Date().getFullYear()} Tulstore. Todos los derechos reservados.</div>
   </footer>
+  <a class="wa-float" href="https://wa.me/573182022859" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.3a9.6 9.6 0 0 0-8.2 14.5L2.3 21.7l4.9-1.3A9.6 9.6 0 1 0 12 2.3zm0 1.8a7.8 7.8 0 0 1 6.6 12 7.8 7.8 0 0 1-9.8 2.4l-.4-.2-2.9.8.8-2.8-.2-.4A7.8 7.8 0 0 1 12 4.1zm-2.9 3.6c-.2 0-.5.1-.7.3-.3.3-.9.9-.9 2.1s.9 2.5 1 2.6c.1.2 1.8 2.8 4.4 3.8 2.2.9 2.6.7 3.1.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.6-.3c-.3-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.3-.1-1.1-.4-2-1.2-.7-.6-1.2-1.4-1.3-1.6-.1-.2 0-.4.1-.5l.4-.4c.1-.2.2-.3.2-.5l.1-.4c0-.2 0-.3-.1-.4l-.7-1.7c-.2-.4-.4-.4-.6-.4h-.1z" fill="currentColor" stroke="none"/></svg>
+  </a>
   <CartDrawer />
 
   <script>
@@ -77,5 +94,27 @@ const socialImage = new URL(image, Astro.site ?? Astro.url.origin);
 </body>
 </html>
 <style is:global>
-.footer{background:var(--navy);color:#fff;padding:38px 0 20px;margin-top:40px}.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:32px}.foot-grid>div{display:flex;flex-direction:column;gap:8px}.foot-grid img{width:160px;background:white;border-radius:12px;padding:5px}.foot-grid p,.foot-grid span{color:rgba(255,255,255,.72)}.foot-grid a{color:rgba(255,255,255,.86);text-decoration:none}.foot-grid a:hover{text-decoration:underline}.copy{border-top:1px solid rgba(255,255,255,.12);margin-top:25px;padding-top:18px;color:rgba(255,255,255,.62);font-size:.78rem}@media(max-width:680px){.foot-grid{grid-template-columns:1fr 1fr}.foot-grid>div:first-child{grid-column:1/-1}}
+.footer{background:var(--navy);color:#fff;padding:46px 0 22px;margin-top:48px}
+.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:36px}
+.foot-grid>div{display:flex;flex-direction:column;gap:9px}
+.foot-grid img{width:150px;background:white;border-radius:12px;padding:6px}
+.foot-grid strong{font-size:.95rem;letter-spacing:.01em;margin-bottom:3px}
+.foot-grid p,.foot-grid span{color:rgba(255,255,255,.72);margin:0;line-height:1.5}
+.foot-grid a{color:rgba(255,255,255,.86);text-decoration:none;width:fit-content;transition:color .15s ease}
+.foot-grid a:hover{color:var(--gold)}
+.foot-brand{max-width:360px}
+.socials{flex-direction:row!important;gap:12px;margin-top:6px}
+.socials a{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#fff;transition:background .18s ease,transform .18s ease,border-color .18s ease}
+.socials a:hover{background:var(--gold);border-color:var(--gold);color:var(--navy);transform:translateY(-2px)}
+.socials svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7}
+.copy{border-top:1px solid rgba(255,255,255,.12);margin-top:30px;padding-top:20px;color:rgba(255,255,255,.62);font-size:.78rem}
+.wa-float{position:fixed;right:18px;bottom:18px;z-index:60;width:56px;height:56px;border-radius:50%;background:var(--whatsapp);color:#fff;display:grid;place-items:center;box-shadow:0 10px 26px rgba(37,211,102,.45);transition:transform .18s ease,background .18s ease}
+.wa-float:hover{background:var(--whatsapp-dark);transform:translateY(-2px) scale(1.04)}
+.wa-float:active{transform:scale(.97)}
+.wa-float svg{width:32px;height:32px}
+@media(max-width:680px){
+  .foot-grid{grid-template-columns:1fr 1fr;gap:24px 32px}
+  .foot-brand{grid-column:1/-1;max-width:none}
+  .wa-float{right:14px;bottom:14px;width:54px;height:54px}
+}
 </style>
