@@ -99,12 +99,23 @@ export function initCatalog(root: HTMLElement, config: CatalogControllerConfig):
     domIndex,
   }));
 
-  // Sticky bar top sync against the (dynamic-height) site header.
+  // Sticky bar top sync.
+  // The site header is NO LONGER sticky/fixed: it scrolls away with the page.
+  // So the mobile catalog bar sticks to the viewport top (top:0) with no header
+  // offset to reserve — reserving the header height would leave a large gap once
+  // the header has scrolled off. We still measure the header: if it is ever
+  // pinned again (position:sticky/fixed) we offset by its height; otherwise 0.
   const headerEl = document.querySelector<HTMLElement>('.site-header');
   const barEl = root.querySelector<HTMLElement>('.sticky-bar');
   const syncStickyTop = () => {
-    const h = headerEl?.getBoundingClientRect().height ?? 0;
-    barEl?.style.setProperty('top', `${Math.round(h)}px`);
+    let top = 0;
+    if (headerEl) {
+      const pos = getComputedStyle(headerEl).position;
+      if (pos === 'sticky' || pos === 'fixed') {
+        top = Math.round(headerEl.getBoundingClientRect().height);
+      }
+    }
+    barEl?.style.setProperty('top', `${top}px`);
   };
   syncStickyTop();
   window.addEventListener('resize', syncStickyTop);

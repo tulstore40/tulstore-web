@@ -1,6 +1,8 @@
 ---
 import { getCategories } from '../lib/catalog';
 const categories = await getCategories();
+const mainCategories = categories.slice(0, 6);
+const moreCategories = categories.slice(6);
 ---
 <header class="site-header">
   <div class="topbar container">
@@ -18,43 +20,64 @@ const categories = await getCategories();
     </button>
   </div>
   <nav class="category-nav" id="category-nav" aria-label="Categorías">
-    <div class="container category-scroll"><a href="/productos">Todos</a>{categories.slice(0, 8).map((category) => <a href={`/categoria/${category.slug}`}>{category.name}</a>)}</div>
+    <div class="container category-scroll">
+      <a href="/productos">Todos</a>
+      {mainCategories.map((category) => <a href={`/categoria/${category.slug}`}>{category.name}</a>)}
+      {moreCategories.length > 0 && (
+        <div class="more-cats" data-more-cats>
+          <button type="button" class="more-toggle" data-more-toggle aria-expanded="false" aria-controls="more-cats-menu">Más categorías ▾</button>
+          <div class="more-menu" id="more-cats-menu" data-more-menu hidden>
+            {moreCategories.map((category) => <a href={`/categoria/${category.slug}`}>{category.name}</a>)}
+          </div>
+        </div>
+      )}
+    </div>
   </nav>
 </header>
 <style>
-.site-header{position:sticky;top:0;z-index:40;background:var(--navy);color:#fff;box-shadow:0 8px 30px rgba(22,33,62,.18)}
-.topbar{height:78px;display:grid;grid-template-columns:auto minmax(240px,1fr) auto;align-items:center;gap:22px}
-.menu-toggle{display:none;border:0;background:rgba(255,255,255,.1);color:#fff;border-radius:12px;width:44px;height:44px;place-items:center}
-.menu-toggle svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.site-header{position:relative;z-index:30;background:var(--navy);color:#fff;box-shadow:0 4px 18px rgba(23,37,66,.14)}
+.topbar{height:60px;display:grid;grid-template-columns:auto minmax(200px,1fr) auto;align-items:center;gap:18px}
+.menu-toggle{display:none;border:0;background:rgba(255,255,255,.1);color:#fff;border-radius:11px;width:42px;height:42px;place-items:center}
+.menu-toggle svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
 .menu-toggle:hover{background:rgba(255,255,255,.18)}
-.brand{height:60px;width:164px;display:flex;align-items:center;justify-content:center;border-radius:12px;background:#fff;padding:5px 10px;text-decoration:none}
+.brand{height:44px;width:140px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#fff;padding:4px 9px;text-decoration:none}
 .brand img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain}
 .search{position:relative}
-.search svg{position:absolute;left:15px;top:50%;width:19px;height:19px;transform:translateY(-50%);fill:none;stroke:#667085;stroke-width:2;stroke-linecap:round}
-.search input{width:100%;border:0;border-radius:999px;padding:13px 18px 13px 45px;font-size:16px;outline:none;transition:box-shadow .15s ease}
-.search input:focus{box-shadow:0 0 0 3px var(--gold)}
-.cart-open{border:0;background:var(--coral);color:#fff;border-radius:999px;padding:11px 15px;font-weight:800;display:flex;align-items:center;gap:7px;transition:background .15s ease,transform .15s ease}
-.cart-open:hover{background:var(--coral-dark);transform:translateY(-1px)}
+.search svg{position:absolute;left:14px;top:50%;width:18px;height:18px;transform:translateY(-50%);fill:none;stroke:#667085;stroke-width:2;stroke-linecap:round}
+.search input{width:100%;border:0;border-radius:999px;padding:10px 16px 10px 42px;font-size:16px;outline:none;transition:box-shadow .15s ease}
+.search input:focus{box-shadow:0 0 0 3px var(--teal)}
+.cart-open{border:0;background:var(--teal);color:#fff;border-radius:999px;padding:9px 14px;font-weight:800;display:flex;align-items:center;gap:7px;transition:background .15s ease,transform .15s ease}
+.cart-open:hover{background:var(--teal-dark);transform:translateY(-1px)}
 .cart-open:active{transform:translateY(0)}
-.cart-open svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2}
-.cart-count{display:grid;place-items:center;background:white;color:var(--coral-dark);border-radius:999px;min-width:22px;height:22px;padding:0 5px;font-size:.73rem;font-weight:900}
+.cart-open svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2}
+.cart-count{display:grid;place-items:center;background:white;color:var(--teal-dark);border-radius:999px;min-width:21px;height:21px;padding:0 5px;font-size:.72rem;font-weight:900}
 .category-nav{border-top:1px solid rgba(255,255,255,.1)}
-.category-scroll{display:flex;gap:8px;overflow-x:auto;padding-top:9px;padding-bottom:9px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.category-scroll{display:flex;align-items:center;gap:7px;overflow-x:auto;padding-top:7px;padding-bottom:7px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .category-scroll::-webkit-scrollbar{display:none}
-.category-scroll a{flex:none;color:rgba(255,255,255,.9);text-decoration:none;border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:8px 14px;font-size:.82rem;transition:background .15s ease,color .15s ease,border-color .15s ease}
-.category-scroll a:hover{background:var(--gold);border-color:var(--gold);color:var(--navy)}
+.category-scroll>a{flex:none;color:rgba(255,255,255,.9);text-decoration:none;border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:6px 13px;font-size:.8rem;transition:background .15s ease,color .15s ease,border-color .15s ease}
+.category-scroll>a:hover{background:var(--teal);border-color:var(--teal);color:#fff}
+.more-cats{flex:none;position:relative}
+.more-toggle{border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;padding:6px 13px;font-size:.8rem;font-weight:700}
+.more-toggle:hover{background:rgba(255,255,255,.18)}
+.more-menu{position:absolute;top:calc(100% + 8px);left:0;z-index:35;background:#fff;border-radius:14px;box-shadow:var(--shadow-lift);padding:8px;min-width:200px;max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.more-menu a{color:var(--ink);text-decoration:none;padding:9px 12px;border-radius:9px;font-size:.86rem}
+.more-menu a:hover{background:var(--teal-soft);color:var(--teal-dark)}
 @media(max-width:680px){
-  .topbar{height:auto;grid-template-columns:auto 1fr auto;gap:10px;padding-top:9px;padding-bottom:9px}
-  .menu-toggle{display:grid}
-  .brand{width:118px;height:46px;padding:4px 8px}
+  .topbar{height:auto;grid-template-columns:auto 1fr auto;gap:9px;padding-top:8px;padding-bottom:8px}
+  .menu-toggle{display:grid;width:40px;height:40px}
+  .brand{width:112px;height:40px;padding:3px 7px}
   .search{grid-column:1/-1;grid-row:2}
   .cart-label{display:none}
-  .cart-open{padding:0;width:44px;height:44px;justify-content:center;position:relative}
+  .cart-open{padding:0;width:40px;height:40px;justify-content:center;position:relative}
   .cart-open .cart-count{position:absolute;top:-4px;right:-4px}
   .category-nav{display:none;border-top:1px solid rgba(255,255,255,.12)}
   .category-nav.open{display:block}
   .category-nav.open .category-scroll{flex-wrap:wrap;overflow:visible}
-  .category-scroll a{padding:9px 14px;font-size:.86rem}
+  .category-scroll>a{padding:8px 13px;font-size:.84rem}
+  .more-cats{position:static}
+  .more-menu{position:static;max-height:none;box-shadow:none;background:rgba(255,255,255,.06);width:100%;margin-top:4px}
+  .more-menu a{color:rgba(255,255,255,.9)}
+  .more-menu a:hover{background:rgba(255,255,255,.14);color:#fff}
 }
 </style>
 <script>
@@ -69,5 +92,29 @@ const categories = await getCategories();
       nav.classList.remove('open');
       toggle?.setAttribute('aria-expanded', 'false');
     }
+  });
+
+  // "Más categorías" dropdown (keyboard + touch accessible, vanilla).
+  const moreWrap = document.querySelector<HTMLElement>('[data-more-cats]');
+  const moreToggle = moreWrap?.querySelector<HTMLButtonElement>('[data-more-toggle]');
+  const moreMenu = moreWrap?.querySelector<HTMLElement>('[data-more-menu]');
+  const setMore = (open: boolean) => {
+    if (!moreMenu || !moreToggle) return;
+    moreMenu.hidden = !open;
+    moreToggle.setAttribute('aria-expanded', String(open));
+  };
+  moreToggle?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const isHidden = moreMenu ? Boolean(moreMenu.hidden) : true;
+    setMore(isHidden);
+  });
+  document.addEventListener('click', (e) => {
+    if (moreWrap && e.target instanceof Node && !moreWrap.contains(e.target)) setMore(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') setMore(false);
+  });
+  moreMenu?.addEventListener('click', (e) => {
+    if (e.target instanceof Element && e.target.closest('a')) setMore(false);
   });
 </script>

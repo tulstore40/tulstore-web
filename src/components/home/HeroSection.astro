@@ -18,26 +18,23 @@ const { data } = Astro.props as { data: HeroConfig };
       <div class="hero-visual">
         <div class="brand-panel">
           <img src="/images/tulstore-logo.png" alt="Tulstore" />
-          <div class="mini-grid"><span>Hogar</span><span>Cocina</span><span>Tecnología</span><span>Infantil</span></div>
         </div>
       </div>
     )}
   </div>
 </section>
 <style>
-.hero{background:linear-gradient(135deg,var(--navy) 0%,#203264 63%,#114b62 100%);color:white;overflow:hidden}
-.hero-grid{min-height:510px;display:grid;grid-template-columns:1.08fr .92fr;align-items:center;gap:42px;padding-top:56px;padding-bottom:56px}
-.eyebrow{font-size:.76rem;letter-spacing:.13em;font-weight:900;color:var(--gold)}
-.hero h1{font-size:clamp(2.5rem,5vw,4.7rem);line-height:.98;letter-spacing:-.055em;margin:14px 0 20px;max-width:760px}
-.hero p{font-size:1.08rem;line-height:1.7;color:rgba(255,255,255,.82);max-width:650px}
-.hero-actions{display:flex;gap:10px;margin-top:25px}
+.hero{background:linear-gradient(135deg,var(--navy) 0%,#1f3a63 58%,var(--teal-dark) 118%);color:white;overflow:hidden}
+.hero-grid{min-height:380px;display:grid;grid-template-columns:1.08fr .92fr;align-items:center;gap:38px;padding-top:40px;padding-bottom:40px}
+.eyebrow{font-size:.74rem;letter-spacing:.13em;font-weight:900;color:var(--gold)}
+.hero h1{font-size:clamp(2.2rem,4.4vw,3.9rem);line-height:1;letter-spacing:-.05em;margin:12px 0 16px;max-width:720px}
+.hero p{font-size:1.02rem;line-height:1.6;color:rgba(255,255,255,.82);max-width:620px}
+.hero-actions{display:flex;gap:10px;margin-top:20px}
 .secondary{background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.22)}
-.trust{display:flex;gap:20px;flex-wrap:wrap;color:rgba(255,255,255,.7);font-size:.82rem;margin-top:28px}
+.trust{display:flex;gap:18px;flex-wrap:wrap;color:rgba(255,255,255,.7);font-size:.8rem;margin-top:22px}
 .hero-visual{display:flex;justify-content:end}
-.brand-panel{background:white;border-radius:28px;box-shadow:0 30px 70px rgba(0,0,0,.22);padding:26px;transform:rotate(2deg);width:min(100%,430px)}
-.brand-panel img{display:block;width:100%;height:280px;object-fit:contain}
-.mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.mini-grid span{background:var(--paper);color:var(--navy);border-radius:10px;padding:10px;text-align:center;font-size:.78rem;font-weight:800}
-@media(max-width:900px){.hero-grid{grid-template-columns:1fr;min-height:auto}.hero-visual{justify-content:center}.brand-panel{width:min(100%,380px)}}
-@media(max-width:680px){.hero-grid{padding-top:36px;padding-bottom:38px}.hero h1{font-size:2.25rem;margin:10px 0 14px}.hero p{font-size:.94rem}.hero-actions{flex-direction:column;align-items:stretch}.trust{gap:8px 14px;font-size:.76rem;margin-top:18px}.brand-panel{display:none}}
+.brand-panel{background:white;border-radius:24px;box-shadow:0 24px 56px rgba(0,0,0,.2);padding:24px;transform:rotate(1.5deg);width:min(100%,400px)}
+.brand-panel img{display:block;width:100%;height:220px;object-fit:contain}
+@media(max-width:900px){.hero-grid{grid-template-columns:1fr;min-height:auto}.hero-visual{justify-content:center}.brand-panel{width:min(100%,340px)}.brand-panel img{height:170px}}
+@media(max-width:680px){.hero-grid{padding-top:26px;padding-bottom:28px;gap:22px}.hero h1{font-size:2rem;margin:8px 0 12px}.hero p{font-size:.92rem}.hero-actions{flex-direction:column;align-items:stretch}.trust{gap:7px 14px;font-size:.74rem;margin-top:16px}.brand-panel{display:none}}
 </style>

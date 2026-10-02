@@ -17,7 +17,7 @@ const socialImage = new URL(image, Astro.site ?? Astro.url.origin);
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#16213E" />
+  <meta name="theme-color" content="#172542" />
   <title>{title}</title>
   <meta name="description" content={description} />
   <link rel="canonical" href={canonical} />
@@ -94,27 +94,29 @@ const socialImage = new URL(image, Astro.site ?? Astro.url.origin);
 </body>
 </html>
 <style is:global>
-.footer{background:var(--navy);color:#fff;padding:46px 0 22px;margin-top:48px}
-.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:36px}
-.foot-grid>div{display:flex;flex-direction:column;gap:9px}
-.foot-grid img{width:150px;background:white;border-radius:12px;padding:6px}
-.foot-grid strong{font-size:.95rem;letter-spacing:.01em;margin-bottom:3px}
-.foot-grid p,.foot-grid span{color:rgba(255,255,255,.72);margin:0;line-height:1.5}
-.foot-grid a{color:rgba(255,255,255,.86);text-decoration:none;width:fit-content;transition:color .15s ease}
+.footer{background:var(--navy);color:#fff;padding:28px 0 16px;margin-top:36px}
+.foot-grid{display:grid;grid-template-columns:1.8fr 1fr 1fr;gap:28px;align-items:start}
+.foot-grid>div{display:flex;flex-direction:column;gap:7px}
+.foot-grid img{width:124px;background:white;border-radius:10px;padding:5px}
+.foot-grid strong{font-size:.9rem;letter-spacing:.01em;margin-bottom:2px}
+.foot-grid p,.foot-grid span{color:rgba(255,255,255,.72);margin:0;line-height:1.45;font-size:.88rem}
+.foot-grid a{color:rgba(255,255,255,.86);text-decoration:none;width:fit-content;font-size:.88rem;transition:color .15s ease}
 .foot-grid a:hover{color:var(--gold)}
-.foot-brand{max-width:360px}
-.socials{flex-direction:row!important;gap:12px;margin-top:6px}
-.socials a{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#fff;transition:background .18s ease,transform .18s ease,border-color .18s ease}
-.socials a:hover{background:var(--gold);border-color:var(--gold);color:var(--navy);transform:translateY(-2px)}
-.socials svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.7}
-.copy{border-top:1px solid rgba(255,255,255,.12);margin-top:30px;padding-top:20px;color:rgba(255,255,255,.62);font-size:.78rem}
-.wa-float{position:fixed;right:18px;bottom:18px;z-index:60;width:56px;height:56px;border-radius:50%;background:var(--whatsapp);color:#fff;display:grid;place-items:center;box-shadow:0 10px 26px rgba(37,211,102,.45);transition:transform .18s ease,background .18s ease}
-.wa-float:hover{background:var(--whatsapp-dark);transform:translateY(-2px) scale(1.04)}
+.foot-brand{max-width:320px}
+.socials{flex-direction:row!important;gap:10px;margin-top:4px}
+.socials a{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#fff;transition:background .18s ease,transform .18s ease,border-color .18s ease}
+.socials a:hover{background:var(--teal);border-color:var(--teal);color:#fff;transform:translateY(-2px)}
+.socials svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7}
+.copy{border-top:1px solid rgba(255,255,255,.12);margin-top:20px;padding-top:14px;color:rgba(255,255,255,.6);font-size:.76rem}
+.wa-float{position:fixed;right:16px;bottom:16px;z-index:60;width:44px;height:44px;border-radius:50%;background:var(--whatsapp);color:#fff;display:grid;place-items:center;box-shadow:0 8px 20px rgba(37,211,102,.42);transition:transform .18s ease,background .18s ease}
+.wa-float:hover{background:var(--whatsapp-dark);transform:translateY(-2px) scale(1.05)}
 .wa-float:active{transform:scale(.97)}
-.wa-float svg{width:32px;height:32px}
+.wa-float svg{width:24px;height:24px}
 @media(max-width:680px){
-  .foot-grid{grid-template-columns:1fr 1fr;gap:24px 32px}
+  .footer{padding:22px 0 14px;margin-top:28px}
+  .foot-grid{grid-template-columns:1fr 1fr;gap:16px 24px}
   .foot-brand{grid-column:1/-1;max-width:none}
-  .wa-float{right:14px;bottom:14px;width:54px;height:54px}
+  .wa-float{right:14px;bottom:14px;width:40px;height:40px}
+  .wa-float svg{width:22px;height:22px}
 }
 </style>
