@@ -1,0 +1,54 @@
+{
+  "verdict": "CHANGES_REQUESTED",
+  "findings": [
+    {
+      "id": 1,
+      "severity": "MEDIUM",
+      "title": "Boot <script> -> controller config passing mechanism unspecified (Astro frontmatter/client-script boundary)",
+      "where": "B2 (CatalogControllerConfig), B3 (boot script), file manifest",
+      "problem": "A bundled Astro <script> that imports the strict-typed catalog-controller.ts cannot close over frontmatter variables (config.pageSize/defaultSort/categoryFilter/priceFilter). The design says the boot script boots the controller with these values but never states the server->client mechanism (define:vars vs serialized data-* attribute + re-validation).",
+      "fix": "Specify: render [data-catalog-root] with data-config={JSON.stringify(controllerConfig)}; bundled boot script imports initCatalog, JSON.parse(root.dataset.config) in try/catch with a hardcoded fallback, coerce pageSize via Number() (NaN/<=0 -> 32) and validate defaultSort against the four SortKeys (invalid -> 'relevancia'), then init."
+    },
+    {
+      "id": 2,
+      "severity": "MEDIUM",
+      "title": "buscar.astro no-query / zero-results state vs CatalogGrid always-on chrome unspecified",
+      "where": "B3, G3, buscar.astro manifest line",
+      "problem": "buscar.astro today renders the grid only when q && results.length>0 (otherwise a prompt or plain empty-state). Replacing with always-mounting <CatalogGrid> (which always renders sticky bar + category chips + bottom-sheet + empty state) changes behavior on empty query / zero results and creates a duplicate search-input UX. The empty/zero-results rendering rule is not specified.",
+      "fix": "State the rule: either mount <CatalogGrid> only when q && results.length>0 (keep current prompt/empty-state otherwise), or if always mounted, suppress chips/sheet and hide the sticky bar when results.length===0. Write it into B3/G3 and the buscar.astro manifest line."
+    },
+    {
+      "id": 3,
+      "severity": "NIT",
+      "title": ".name line-clamp override: edit base, do not re-declare",
+      "where": "A2",
+      "problem": "A2 re-states the existing scoped .name base (clamp:2;min-height:2.6em) then adds a min-width:560px override. Works, but shown as an addition rather than instructing to keep the base and add only the override.",
+      "fix": "Reword A2: keep existing .name base; add only @media(min-width:560px){.name{-webkit-line-clamp:3;min-height:auto}}."
+    },
+    {
+      "id": 4,
+      "severity": "NIT",
+      "title": "INACTIVO products silently included (pre-existing) not stated",
+      "where": "Track H; A2 edge-cases",
+      "problem": "catalog.ts returns INACTIVO rows and all pages render them (no estado filter exists). Design preserves this correctly but A2 names only AGOTADO/REVISAR, which could read as special-casing.",
+      "fix": "Add a line that INACTIVO is rendered as today; no status-based hiding is introduced."
+    },
+    {
+      "id": 5,
+      "severity": "NIT",
+      "title": "apply() cursor reset vs counter/Ver-mas on buscar.astro narrowing",
+      "where": "B2, Track C paths 2/3",
+      "problem": "apply() resets the visible cursor to pageSize every keystroke; the design does not explicitly state the counter and Ver-mas remaining reflect the narrowed filtered length on buscar.astro.",
+      "fix": "Add to B2: apply() always recomputes [data-catalog-count] and the Ver-mas remaining badge from the freshly filtered length."
+    },
+    {
+      "id": 6,
+      "severity": "NIT",
+      "title": "content-visibility intrinsic height 320px is an untested assumption",
+      "where": "B0",
+      "problem": "contain-intrinsic-size:0 320px asserts the compact-card height; the A2 compact card may be shorter at 360/390/414px. Over/under-reserving affects the scroll-stability goal. Presented as settled.",
+      "fix": "Mark 320px as a QA-tunable value to validate at phone widths, or derive it from the A2 layout."
+    }
+  ],
+  "reviewDoc": "c:\\Users\\Usuario\\Downloads\\Tulstore-Web/.agents/tasks/design-review.md"
+}
