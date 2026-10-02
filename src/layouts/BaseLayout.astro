@@ -59,6 +59,10 @@ const socialImage = new URL(image, Astro.site ?? Astro.url.origin);
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.3a9.6 9.6 0 0 0-8.2 14.5L2.3 21.7l4.9-1.3A9.6 9.6 0 1 0 12 2.3zm0 1.8a7.8 7.8 0 0 1 6.6 12 7.8 7.8 0 0 1-9.8 2.4l-.4-.2-2.9.8.8-2.8-.2-.4A7.8 7.8 0 0 1 12 4.1zm-2.9 3.6c-.2 0-.5.1-.7.3-.3.3-.9.9-.9 2.1s.9 2.5 1 2.6c.1.2 1.8 2.8 4.4 3.8 2.2.9 2.6.7 3.1.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.6-.3c-.3-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.3-.1-1.1-.4-2-1.2-.7-.6-1.2-1.4-1.3-1.6-.1-.2 0-.4.1-.5l.4-.4c.1-.2.2-.3.2-.5l.1-.4c0-.2 0-.3-.1-.4l-.7-1.7c-.2-.4-.4-.4-.6-.4h-.1z" fill="currentColor" stroke="none"/></svg>
   </a>
   <CartDrawer />
+  <div class="cart-toast" data-cart-toast role="status" aria-live="polite" hidden>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+    <span>Añadido al carrito</span>
+  </div>
 
   <script>
     interface CartItem { id: string | number; name: string; ref: string; price: number; image: string; qty: number; }
@@ -80,9 +84,24 @@ const socialImage = new URL(image, Astro.site ?? Astro.url.origin);
     }
     function openCart(){document.querySelector('[data-cart-drawer]')?.classList.add('open');document.querySelector('[data-cart-overlay]')?.classList.add('open');document.body.style.overflow='hidden'}
     function closeCart(){document.querySelector('[data-cart-drawer]')?.classList.remove('open');document.querySelector('[data-cart-overlay]')?.classList.remove('open');document.body.style.overflow=''}
+    const isDesktop = () => window.matchMedia('(min-width: 900px)').matches;
+    let toastTimer = 0;
+    const showToast = () => {
+      const toast = document.querySelector<HTMLElement>('[data-cart-toast]');
+      if(!toast) return;
+      toast.hidden = false;
+      // reflow so the transition replays on rapid taps
+      void toast.offsetWidth;
+      toast.classList.add('show');
+      window.clearTimeout(toastTimer);
+      toastTimer = window.setTimeout(()=>{
+        toast.classList.remove('show');
+        window.setTimeout(()=>{ toast.hidden = true; }, 220);
+      }, 1600);
+    };
     document.addEventListener('click',(e)=>{
       const el=e.target instanceof Element?e.target:null; if(!el)return;
-      const add=el.closest('[data-add-cart]'); if(add){ const raw=add.getAttribute('data-product'); if(!raw) return; const product=JSON.parse(raw) as Omit<CartItem,'qty'>; const cart=getCart(); const found=cart.find((i: CartItem)=>i.id===product.id); found?found.qty++:cart.push({...product,qty:1}); setCart(cart); openCart(); return; }
+      const add=el.closest('[data-add-cart]'); if(add){ const raw=add.getAttribute('data-product'); if(!raw) return; const product=JSON.parse(raw) as Omit<CartItem,'qty'>; const cart=getCart(); const found=cart.find((i: CartItem)=>i.id===product.id); found?found.qty++:cart.push({...product,qty:1}); setCart(cart); if(isDesktop()){ openCart(); } else { showToast(); } return; }
       if(el.closest('[data-cart-open]')) return openCart();
       if(el.closest('[data-cart-close]')||el.closest('[data-cart-overlay]')) return closeCart();
       const plus=el.closest('[data-cart-plus]'); const minus=el.closest('[data-cart-minus]'); const rem=el.closest('[data-cart-remove]');
@@ -103,7 +122,7 @@ const socialImage = new URL(image, Astro.site ?? Astro.url.origin);
 .foot-grid a{color:rgba(255,255,255,.86);text-decoration:none;width:fit-content;font-size:.88rem;transition:color .15s ease}
 .foot-grid a:hover{color:var(--gold)}
 .foot-brand{max-width:320px}
-.socials{flex-direction:row!important;gap:10px;margin-top:4px}
+.socials{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:10px;margin-top:4px}
 .socials a{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);color:#fff;transition:background .18s ease,transform .18s ease,border-color .18s ease}
 .socials a:hover{background:var(--teal);border-color:var(--teal);color:#fff;transform:translateY(-2px)}
 .socials svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7}
@@ -112,6 +131,10 @@ const socialImage = new URL(image, Astro.site ?? Astro.url.origin);
 .wa-float:hover{background:var(--whatsapp-dark);transform:translateY(-2px) scale(1.05)}
 .wa-float:active{transform:scale(.97)}
 .wa-float svg{width:24px;height:24px}
+/* Lightweight add-to-cart feedback (mobile): brief snackbar, no drawer. */
+.cart-toast{position:fixed;left:50%;bottom:70px;z-index:70;transform:translateX(-50%) translateY(12px);display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:#fff;border-radius:999px;padding:10px 16px;font-size:.86rem;font-weight:800;box-shadow:0 10px 26px rgba(23,37,66,.28);opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;max-width:calc(100% - 28px)}
+.cart-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.cart-toast svg{width:17px;height:17px;flex:none;fill:none;stroke:var(--teal);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
 @media(max-width:680px){
   .footer{padding:22px 0 14px;margin-top:28px}
   .foot-grid{grid-template-columns:1fr 1fr;gap:16px 24px}

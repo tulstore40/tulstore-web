@@ -1,14 +1,18 @@
 ---
 import { getCategories } from '../lib/catalog';
 const categories = await getCategories();
-const mainCategories = categories.slice(0, 6);
-const moreCategories = categories.slice(6);
+const mainCategories = categories.slice(0, 5);
+const moreCategories = categories.slice(5);
+
+// Presentational active-state derivation (no data change): highlight the chip
+// matching the current /categoria/<slug> page, or "Todos" on /productos.
+const pathname = Astro.url.pathname;
+const categoryMatch = pathname.match(/^\/categoria\/([^/]+)/);
+const activeSlug = categoryMatch ? decodeURIComponent(categoryMatch[1]) : null;
+const todosActive = pathname === '/productos' || pathname === '/productos/';
 ---
 <header class="site-header">
   <div class="topbar container">
-    <button class="menu-toggle" data-nav-toggle aria-label="Abrir menú de categorías" aria-expanded="false" aria-controls="category-nav">
-      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-    </button>
     <a class="brand" href="/" aria-label="Tulstore inicio"><img src="/images/tulstore-logo.png" alt="Tulstore" /></a>
     <form class="search" action="/buscar" method="get" role="search">
       <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -21,13 +25,29 @@ const moreCategories = categories.slice(6);
   </div>
   <nav class="category-nav" id="category-nav" aria-label="Categorías">
     <div class="container category-scroll">
-      <a href="/productos">Todos</a>
-      {mainCategories.map((category) => <a href={`/categoria/${category.slug}`}>{category.name}</a>)}
+      <span class="cat-lead" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        Categorías
+      </span>
+      <a href="/productos" class={todosActive ? 'cat-chip active' : 'cat-chip'} aria-current={todosActive ? 'page' : undefined}>Todos</a>
+      {mainCategories.map((category) => (
+        <a
+          href={`/categoria/${category.slug}`}
+          class={activeSlug === category.slug ? 'cat-chip active' : 'cat-chip'}
+          aria-current={activeSlug === category.slug ? 'page' : undefined}
+        >{category.name}</a>
+      ))}
       {moreCategories.length > 0 && (
         <div class="more-cats" data-more-cats>
           <button type="button" class="more-toggle" data-more-toggle aria-expanded="false" aria-controls="more-cats-menu">Más categorías ▾</button>
           <div class="more-menu" id="more-cats-menu" data-more-menu hidden>
-            {moreCategories.map((category) => <a href={`/categoria/${category.slug}`}>{category.name}</a>)}
+            {moreCategories.map((category) => (
+              <a
+                href={`/categoria/${category.slug}`}
+                class={activeSlug === category.slug ? 'active' : undefined}
+                aria-current={activeSlug === category.slug ? 'page' : undefined}
+              >{category.name}</a>
+            ))}
           </div>
         </div>
       )}
@@ -36,11 +56,8 @@ const moreCategories = categories.slice(6);
 </header>
 <style>
 .site-header{position:relative;z-index:30;background:var(--navy);color:#fff;box-shadow:0 4px 18px rgba(23,37,66,.14)}
-.topbar{height:60px;display:grid;grid-template-columns:auto minmax(200px,1fr) auto;align-items:center;gap:18px}
-.menu-toggle{display:none;border:0;background:rgba(255,255,255,.1);color:#fff;border-radius:11px;width:42px;height:42px;place-items:center}
-.menu-toggle svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
-.menu-toggle:hover{background:rgba(255,255,255,.18)}
-.brand{height:44px;width:140px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#fff;padding:4px 9px;text-decoration:none}
+.topbar{height:58px;display:grid;grid-template-columns:auto minmax(200px,1fr) auto;align-items:center;gap:16px}
+.brand{height:42px;width:138px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#fff;padding:4px 9px;text-decoration:none}
 .brand img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain}
 .search{position:relative}
 .search svg{position:absolute;left:14px;top:50%;width:18px;height:18px;transform:translateY(-50%);fill:none;stroke:#667085;stroke-width:2;stroke-linecap:round}
@@ -51,49 +68,44 @@ const moreCategories = categories.slice(6);
 .cart-open:active{transform:translateY(0)}
 .cart-open svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2}
 .cart-count{display:grid;place-items:center;background:white;color:var(--teal-dark);border-radius:999px;min-width:21px;height:21px;padding:0 5px;font-size:.72rem;font-weight:900}
-.category-nav{border-top:1px solid rgba(255,255,255,.1)}
-.category-scroll{display:flex;align-items:center;gap:7px;overflow-x:auto;padding-top:7px;padding-bottom:7px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+
+/* Compact, light category bar — no sparse navy band, pill chips with a clear active state. */
+.category-nav{background:var(--paper);border-top:1px solid rgba(255,255,255,.06)}
+/* Desktop: all chips + "Más categorías" fit on one line, no horizontal overflow/scroll. */
+.category-scroll{display:flex;align-items:center;flex-wrap:nowrap;gap:7px;padding-top:8px;padding-bottom:8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .category-scroll::-webkit-scrollbar{display:none}
-.category-scroll>a{flex:none;color:rgba(255,255,255,.9);text-decoration:none;border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:6px 13px;font-size:.8rem;transition:background .15s ease,color .15s ease,border-color .15s ease}
-.category-scroll>a:hover{background:var(--teal);border-color:var(--teal);color:#fff}
+.cat-lead{flex:none;display:inline-flex;align-items:center;gap:6px;color:var(--ink-soft);font-size:.78rem;font-weight:800;padding-right:4px;margin-right:2px;border-right:1px solid var(--line)}
+.cat-lead svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.cat-chip{flex:0 1 auto;min-width:0;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--navy);text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:.82rem;font-weight:700;transition:background .15s ease,color .15s ease,border-color .15s ease}
+.cat-chip:hover{background:var(--teal-soft);border-color:var(--teal);color:var(--teal-dark)}
+.cat-chip.active{background:var(--teal);border-color:var(--teal);color:#fff}
 .more-cats{flex:none;position:relative}
-.more-toggle{border:1px solid rgba(255,255,255,.28);background:rgba(255,255,255,.08);color:#fff;border-radius:999px;padding:6px 13px;font-size:.8rem;font-weight:700}
-.more-toggle:hover{background:rgba(255,255,255,.18)}
-.more-menu{position:absolute;top:calc(100% + 8px);left:0;z-index:35;background:#fff;border-radius:14px;box-shadow:var(--shadow-lift);padding:8px;min-width:200px;max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.more-toggle{border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:999px;padding:7px 14px;font-size:.82rem;font-weight:800}
+.more-toggle:hover{background:var(--teal-soft);border-color:var(--teal);color:var(--teal-dark)}
+.more-menu{position:absolute;top:calc(100% + 8px);right:0;z-index:35;background:#fff;border-radius:14px;box-shadow:var(--shadow-lift);padding:8px;min-width:210px;max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.more-menu[hidden]{display:none}
 .more-menu a{color:var(--ink);text-decoration:none;padding:9px 12px;border-radius:9px;font-size:.86rem}
 .more-menu a:hover{background:var(--teal-soft);color:var(--teal-dark)}
+.more-menu a.active{background:var(--teal);color:#fff}
 @media(max-width:680px){
   .topbar{height:auto;grid-template-columns:auto 1fr auto;gap:9px;padding-top:8px;padding-bottom:8px}
-  .menu-toggle{display:grid;width:40px;height:40px}
-  .brand{width:112px;height:40px;padding:3px 7px}
+  .brand{width:112px;height:38px;padding:3px 7px}
   .search{grid-column:1/-1;grid-row:2}
   .cart-label{display:none}
   .cart-open{padding:0;width:40px;height:40px;justify-content:center;position:relative}
   .cart-open .cart-count{position:absolute;top:-4px;right:-4px}
-  .category-nav{display:none;border-top:1px solid rgba(255,255,255,.12)}
-  .category-nav.open{display:block}
-  .category-nav.open .category-scroll{flex-wrap:wrap;overflow:visible}
-  .category-scroll>a{padding:8px 13px;font-size:.84rem}
-  .more-cats{position:static}
-  .more-menu{position:static;max-height:none;box-shadow:none;background:rgba(255,255,255,.06);width:100%;margin-top:4px}
-  .more-menu a{color:rgba(255,255,255,.9)}
-  .more-menu a:hover{background:rgba(255,255,255,.14);color:#fff}
+  /* Mobile: swipeable horizontal slider — always visible, not hidden behind a menu. */
+  .category-scroll{gap:6px;padding-top:7px;padding-bottom:7px;overflow-x:auto}
+  .cat-lead{font-size:.72rem;padding-right:3px}
+  .cat-lead svg{width:15px;height:15px}
+  .cat-chip,.more-toggle{padding:6px 12px;font-size:.78rem}
+  /* In the mobile slider chips keep full width (swipe reveals them) — no ellipsis cap. */
+  .cat-chip{flex:none;max-width:none;overflow:visible;text-overflow:clip}
+  /* On mobile the dropdown opens as a left-anchored sheet so it never overflows the viewport. */
+  .more-menu{position:fixed;left:10px;right:10px;top:auto;min-width:0;max-height:50vh}
 }
 </style>
 <script>
-  const toggle = document.querySelector<HTMLButtonElement>('[data-nav-toggle]');
-  const nav = document.getElementById('category-nav');
-  toggle?.addEventListener('click', () => {
-    const open = nav?.classList.toggle('open') ?? false;
-    toggle.setAttribute('aria-expanded', String(open));
-  });
-  nav?.addEventListener('click', (e) => {
-    if (e.target instanceof Element && e.target.closest('a')) {
-      nav.classList.remove('open');
-      toggle?.setAttribute('aria-expanded', 'false');
-    }
-  });
-
   // "Más categorías" dropdown (keyboard + touch accessible, vanilla).
   const moreWrap = document.querySelector<HTMLElement>('[data-more-cats]');
   const moreToggle = moreWrap?.querySelector<HTMLButtonElement>('[data-more-toggle]');
