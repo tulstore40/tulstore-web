@@ -84,20 +84,36 @@ function mapRow(row: PublicCatalogRow, baseUrl: string): Product {
   };
 }
 
+// PostgREST caps every response at a default of 1000 rows. To load the ENTIRE
+// public_catalog (so search, categories and pagination never miss products such
+// as "ventilador" that fall beyond row 1000) we page through it with the Range
+// header until a short page signals the end.
+const PAGE_ROWS = 1000;
+
 export async function getProducts(force = false): Promise<Product[]> {
   if (!force && cache && Date.now() - cache.at < CACHE_MS) return cache.products;
   const { url, key } = env();
-  const endpoint = new URL(`${url}/rest/v1/public_catalog`);
-  endpoint.searchParams.set('select', '*');
-  endpoint.searchParams.set('order', 'producto.asc');
-  const response = await fetch(endpoint, {
-    headers: { apikey: key },
-  });
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`No se pudo leer public_catalog (${response.status}): ${body}`);
+  const rows: PublicCatalogRow[] = [];
+  let offset = 0;
+  // Loop until a page comes back smaller than PAGE_ROWS (the last page).
+  for (;;) {
+    const endpoint = new URL(`${url}/rest/v1/public_catalog`);
+    endpoint.searchParams.set('select', '*');
+    endpoint.searchParams.set('order', 'producto.asc');
+    const from = offset;
+    const to = offset + PAGE_ROWS - 1;
+    const response = await fetch(endpoint, {
+      headers: { apikey: key, Range: `${from}-${to}`, 'Range-Unit': 'items' },
+    });
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`No se pudo leer public_catalog (${response.status}): ${body}`);
+    }
+    const page = (await response.json()) as PublicCatalogRow[];
+    rows.push(...page);
+    if (page.length < PAGE_ROWS) break;
+    offset += PAGE_ROWS;
   }
-  const rows = (await response.json()) as PublicCatalogRow[];
   const products = rows.map((row) => mapRow(row, url));
   cache = { at: Date.now(), products };
   return products;
