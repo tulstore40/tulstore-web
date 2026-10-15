@@ -123,9 +123,25 @@ export function initCatalog(root: HTMLElement, config: CatalogControllerConfig):
     ?.querySelector('[data-nav-toggle]')
     ?.addEventListener('click', () => requestAnimationFrame(syncStickyTop));
 
+  // Grid columns helper to guarantee full rows without gaps
+  function getGridCols(): number {
+    if (!grid) return 2;
+    const computed = window.getComputedStyle(grid).gridTemplateColumns;
+    if (!computed || computed === 'none') return 2;
+    const count = computed.split(' ').filter(Boolean).length;
+    return count > 0 ? count : 2;
+  }
+
+  function getBatchSize(): number {
+    const cols = getGridCols();
+    const base = config.pageSize > 0 ? config.pageSize : 24;
+    return Math.max(cols * 4, Math.ceil(base / cols) * cols);
+  }
+
   // Control references.
   const searchInput = root.querySelector<HTMLInputElement>('[data-catalog-search]');
   const seeMoreBtn = root.querySelector<HTMLButtonElement>('[data-see-more]');
+  const seeMoreWrap = root.querySelector<HTMLElement>('.see-more-wrap');
   const emptyEl = root.querySelector<HTMLElement>('[data-catalog-empty]');
   const countEl = root.querySelector<HTMLElement>('[data-catalog-count]');
   const catSelect = root.querySelector<HTMLSelectElement>('[data-filter-cat]');
@@ -159,7 +175,7 @@ export function initCatalog(root: HTMLElement, config: CatalogControllerConfig):
   if (maxInput && !Number.isNaN(state.max)) maxInput.value = String(state.max);
   if (sortSelect) sortSelect.value = state.sort;
 
-  let cursor = config.pageSize;
+  let cursor = getBatchSize();
   let filtered: CatalogItem[] = [];
 
   const activeFilterCount = (): number => {
@@ -173,10 +189,14 @@ export function initCatalog(root: HTMLElement, config: CatalogControllerConfig):
 
   const render = () => {
     // Reveal first `cursor` filtered items, hide the rest.
-    for (const item of items) item.el.hidden = true;
+    for (const item of items) {
+      item.el.hidden = true;
+      item.el.style.display = 'none';
+    }
     filtered.forEach((item, index) => {
       if (index < cursor) {
         item.el.hidden = false;
+        item.el.style.display = '';
         item.el.style.order = String(index);
       }
     });
@@ -185,16 +205,34 @@ export function initCatalog(root: HTMLElement, config: CatalogControllerConfig):
     if (countEl) {
       countEl.textContent = `${total} producto${total === 1 ? '' : 's'}`;
     }
-    if (emptyEl) emptyEl.hidden = total !== 0;
-    if (grid) grid.hidden = total === 0;
+    if (emptyEl) {
+      emptyEl.hidden = total !== 0;
+      emptyEl.style.display = total === 0 ? 'block' : 'none';
+    }
+    if (grid) {
+      grid.hidden = total === 0;
+      grid.style.display = total === 0 ? 'none' : 'grid';
+    }
 
-    if (seeMoreBtn) {
-      const remaining = total - Math.min(cursor, total);
-      if (remaining > 0) {
+    const remaining = total - Math.min(cursor, total);
+    if (remaining > 0 && total > 0) {
+      if (seeMoreBtn) {
         seeMoreBtn.hidden = false;
+        seeMoreBtn.style.display = 'inline-flex';
         seeMoreBtn.textContent = `Ver más (${remaining})`;
-      } else {
+      }
+      if (seeMoreWrap) {
+        seeMoreWrap.hidden = false;
+        seeMoreWrap.style.display = 'flex';
+      }
+    } else {
+      if (seeMoreBtn) {
         seeMoreBtn.hidden = true;
+        seeMoreBtn.style.display = 'none';
+      }
+      if (seeMoreWrap) {
+        seeMoreWrap.hidden = true;
+        seeMoreWrap.style.display = 'none';
       }
     }
 
@@ -208,14 +246,24 @@ export function initCatalog(root: HTMLElement, config: CatalogControllerConfig):
   const apply = () => {
     const subset = items.filter((item) => matchesFilters(item, state, config));
     filtered = sortItems(subset, state.sort);
-    cursor = config.pageSize; // reset pagination on every filter change
+    cursor = getBatchSize(); // reset pagination on every filter change, aligned to columns
     render();
   };
 
-  // "Ver más": reveal the next page of the current filtered set.
+  // "Ver más": reveal the next page of full rows.
   seeMoreBtn?.addEventListener('click', () => {
-    cursor += config.pageSize;
+    cursor += getBatchSize();
     render();
+  });
+
+  // Re-align pagination on viewport resize to prevent empty column holes on orientation change
+  window.addEventListener('resize', () => {
+    const cols = getGridCols();
+    const aligned = Math.ceil(cursor / cols) * cols;
+    if (aligned !== cursor) {
+      cursor = aligned;
+      render();
+    }
   });
 
   // Debounced in-place search (no navigation).

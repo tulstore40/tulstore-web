@@ -2,18 +2,75 @@
 import type { CtaConfig } from '../../lib/siteConfig';
 const { data } = Astro.props as { data: CtaConfig };
 ---
-<section class="container cta">
-  <div>
-    <span class="eyebrow">{data.eyebrow}</span>
-    <h2>{data.title}</h2>
-    <p>{data.text}</p>
+<section class="container cta-section-wrap">
+  <div class="cta-card">
+    <div class="cta-copy">
+      <span class="eyebrow">{data.eyebrow}</span>
+      <h2>{data.title}</h2>
+      <p>{data.text}</p>
+    </div>
+    <a class="btn btn-wa cta-wa-btn" href={data.whatsappHref} target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="wa-icon">
+        <path d="M12 2.3a9.6 9.6 0 0 0-8.2 14.5L2.3 21.7l4.9-1.3A9.6 9.6 0 1 0 12 2.3zm0 1.8a7.8 7.8 0 0 1 6.6 12 7.8 7.8 0 0 1-9.8 2.4l-.4-.2-2.9.8.8-2.8-.2-.4A7.8 7.8 0 0 1 12 4.1zm-2.9 3.6c-.2 0-.5.1-.7.3-.3.3-.9.9-.9 2.1s.9 2.5 1 2.6c.1.2 1.8 2.8 4.4 3.8 2.2.9 2.6.7 3.1.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.6-.3c-.3-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.3-.1-1.1-.4-2-1.2-.7-.6-1.2-1.4-1.3-1.6-.1-.2 0-.4.1-.5l.4-.4c.1-.2.2-.3.2-.5l.1-.4c0-.2 0-.3-.1-.4l-.7-1.7c-.2-.4-.4-.4-.6-.4h-.1z"/>
+      </svg>
+      <span>{data.buttonLabel}</span>
+    </a>
   </div>
-  <a class="btn btn-wa" href={data.whatsappHref} target="_blank" rel="noopener">{data.buttonLabel}</a>
 </section>
+
 <style>
-.cta{margin-top:12px;margin-bottom:48px;background:linear-gradient(135deg,var(--teal-soft),#fff);border:1px solid #c7eceb;border-radius:20px;padding:24px 28px;display:flex;align-items:center;justify-content:space-between;gap:26px}
-.cta .eyebrow{font-size:.74rem;letter-spacing:.13em;font-weight:900;color:var(--teal-dark)}
-.cta h2{font-size:1.75rem;color:var(--navy);margin:6px 0}
-.cta p{color:var(--ink-soft);margin:0}
-@media(max-width:680px){.cta{margin-bottom:30px;padding:20px;flex-direction:column;align-items:flex-start}.cta h2{font-size:1.4rem}}
+  .cta-section-wrap {
+    margin-top: 16px;
+    margin-bottom: 56px;
+  }
+  .cta-card {
+    background: linear-gradient(135deg, var(--teal-soft) 0%, #ffffff 80%);
+    border: 1px solid var(--teal-border);
+    border-radius: var(--radius-card);
+    padding: 28px 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 32px;
+    box-shadow: var(--shadow-sm);
+  }
+  .cta-copy .eyebrow {
+    font-size: 0.76rem;
+    letter-spacing: 0.12em;
+    font-weight: 850;
+    color: var(--teal-dark);
+    text-transform: uppercase;
+  }
+  .cta-card h2 {
+    font-size: 1.85rem;
+    color: var(--navy);
+    margin: 8px 0 6px;
+    font-weight: 850;
+    letter-spacing: -0.03em;
+  }
+  .cta-card p {
+    color: var(--ink-soft);
+    margin: 0;
+    font-size: 0.96rem;
+    line-height: 1.5;
+  }
+  .cta-wa-btn {
+    flex: none;
+    padding: 13px 24px;
+    font-size: 0.94rem;
+    border-radius: var(--radius-pill);
+    box-shadow: 0 4px 14px rgba(37, 211, 102, 0.35);
+  }
+  .wa-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  @media (max-width: 768px) {
+    .cta-section-wrap { margin-bottom: 36px; }
+    .cta-card { padding: 22px 20px; flex-direction: column; align-items: flex-start; gap: 20px; }
+    .cta-card h2 { font-size: 1.45rem; }
+    .cta-wa-btn { width: 100%; justify-content: center; }
+  }
 </style>
+

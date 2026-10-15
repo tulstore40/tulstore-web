@@ -9,32 +9,161 @@ const { data } = Astro.props as { data: HeroConfig };
       <h1>{data.title}</h1>
       <p>{data.subtitle}</p>
       <div class="hero-actions">
-        <a class="btn btn-coral" href={data.primaryCta.href}>{data.primaryCta.label}</a>
+        <a class="btn btn-teal hero-cta-btn" href={data.primaryCta.href}>
+          <span>{data.primaryCta.label}</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="cta-arrow"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
         <a class="btn secondary" href={data.secondaryCta.href}>{data.secondaryCta.label}</a>
       </div>
-      <div class="trust">{data.trust.map((t) => <span>{t}</span>)}</div>
+      <div class="trust">
+        {data.trust.map((t) => <span>{t}</span>)}
+      </div>
     </div>
     {data.showBrandPanel && (
       <div class="hero-visual">
         <div class="brand-panel">
           <img src="/images/tulstore-logo.png" alt="Tulstore" />
+          <div class="brand-badge-pill">Tienda Oficial Colombia</div>
         </div>
       </div>
     )}
   </div>
 </section>
+
 <style>
-.hero{background:linear-gradient(135deg,var(--navy) 0%,#1f3a63 58%,var(--teal-dark) 118%);color:white;overflow:hidden}
-.hero-grid{min-height:380px;display:grid;grid-template-columns:1.08fr .92fr;align-items:center;gap:38px;padding-top:40px;padding-bottom:40px}
-.eyebrow{font-size:.74rem;letter-spacing:.13em;font-weight:900;color:var(--gold)}
-.hero h1{font-size:clamp(2.2rem,4.4vw,3.9rem);line-height:1;letter-spacing:-.05em;margin:12px 0 16px;max-width:720px}
-.hero p{font-size:1.02rem;line-height:1.6;color:rgba(255,255,255,.82);max-width:620px}
-.hero-actions{display:flex;gap:10px;margin-top:20px}
-.secondary{background:rgba(255,255,255,.1);color:white;border:1px solid rgba(255,255,255,.22)}
-.trust{display:flex;gap:18px;flex-wrap:wrap;color:rgba(255,255,255,.7);font-size:.8rem;margin-top:22px}
-.hero-visual{display:flex;justify-content:end}
-.brand-panel{background:white;border-radius:24px;box-shadow:0 24px 56px rgba(0,0,0,.2);padding:24px;transform:rotate(1.5deg);width:min(100%,400px)}
-.brand-panel img{display:block;width:100%;height:220px;object-fit:contain}
-@media(max-width:900px){.hero-grid{grid-template-columns:1fr;min-height:auto}.hero-visual{justify-content:center}.brand-panel{width:min(100%,340px)}.brand-panel img{height:170px}}
-@media(max-width:680px){.hero-grid{padding-top:26px;padding-bottom:28px;gap:22px}.hero h1{font-size:2rem;margin:8px 0 12px}.hero p{font-size:.92rem}.hero-actions{flex-direction:column;align-items:stretch}.trust{gap:7px 14px;font-size:.74rem;margin-top:16px}.brand-panel{display:none}}
+  .hero {
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 55%, #0F766E 130%);
+    color: #ffffff;
+    overflow: hidden;
+    position: relative;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 80% 20%, rgba(13, 148, 136, 0.15) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .hero-grid {
+    min-height: 420px;
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    align-items: center;
+    gap: 48px;
+    padding-top: 48px;
+    padding-bottom: 48px;
+    position: relative;
+    z-index: 2;
+  }
+  .eyebrow {
+    font-size: 0.78rem;
+    letter-spacing: 0.15em;
+    font-weight: 850;
+    color: var(--teal);
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    font-size: clamp(2.3rem, 4.6vw, 4rem);
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    margin: 14px 0 18px;
+    font-weight: 850;
+    color: #ffffff;
+    max-width: 720px;
+  }
+  .hero p {
+    font-size: 1.06rem;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.84);
+    max-width: 620px;
+    margin: 0 0 24px;
+  }
+  .hero-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .hero-cta-btn {
+    padding: 13px 26px;
+    font-size: 0.96rem;
+    font-weight: 800;
+  }
+  .cta-arrow {
+    width: 17px;
+    height: 17px;
+    transition: transform 0.15s ease;
+  }
+  .hero-cta-btn:hover .cta-arrow {
+    transform: translateX(3px);
+  }
+  .secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    backdrop-filter: blur(4px);
+    padding: 13px 22px;
+  }
+  .secondary:hover {
+    background: rgba(255, 255, 255, 0.18);
+  }
+  .trust {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.84rem;
+    font-weight: 600;
+    margin-top: 28px;
+  }
+  .hero-visual {
+    display: flex;
+    justify-content: flex-end;
+  }
+  .brand-panel {
+    background: #ffffff;
+    border-radius: 24px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+    padding: 28px;
+    width: min(100%, 380px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: transform 0.25s ease;
+  }
+  .brand-panel:hover {
+    transform: translateY(-4px);
+  }
+  .brand-panel img {
+    display: block;
+    width: 100%;
+    height: 200px;
+    object-fit: contain;
+  }
+  .brand-badge-pill {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--teal-dark);
+    background: var(--teal-soft);
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--teal-border);
+  }
+
+  @media (max-width: 900px) {
+    .hero-grid { grid-template-columns: 1fr; min-height: auto; gap: 32px; }
+    .hero-visual { justify-content: center; }
+    .brand-panel { width: min(100%, 340px); }
+    .brand-panel img { height: 160px; }
+  }
+  @media (max-width: 680px) {
+    .hero-grid { padding-top: 32px; padding-bottom: 36px; gap: 24px; }
+    .hero h1 { font-size: 2.15rem; margin: 10px 0 14px; }
+    .hero p { font-size: 0.94rem; margin-bottom: 20px; }
+    .hero-actions { flex-direction: column; align-items: stretch; }
+    .trust { gap: 10px 16px; font-size: 0.78rem; margin-top: 20px; }
+    .brand-panel { display: none; }
+  }
 </style>
+

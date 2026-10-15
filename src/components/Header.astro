@@ -4,8 +4,6 @@ const categories = await getCategories();
 const mainCategories = categories.slice(0, 5);
 const moreCategories = categories.slice(5);
 
-// Presentational active-state derivation (no data change): highlight the chip
-// matching the current /categoria/<slug> page, or "Todos" on /productos.
 const pathname = Astro.url.pathname;
 const categoryMatch = pathname.match(/^\/categoria\/([^/]+)/);
 const activeSlug = categoryMatch ? decodeURIComponent(categoryMatch[1]) : null;
@@ -13,120 +11,513 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
 ---
 <header class="site-header">
   <div class="topbar container">
-    <a class="brand" href="/" aria-label="Tulstore inicio"><img src="/images/tulstore-logo.png" alt="Tulstore" /></a>
+    <a class="brand" href="/" aria-label="Tulstore inicio">
+      <img src="/images/tulstore-logo.png" alt="Tulstore" />
+    </a>
+    
     <form class="search" action="/buscar" method="get" role="search">
-      <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+      </svg>
       <input type="search" name="q" placeholder="Buscar producto, referencia o color..." aria-label="Buscar productos" />
     </form>
-    <button class="cart-open" data-cart-open aria-label="Abrir carrito">
-      <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 4h2l2.1 9.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.6L20 7H6"/><circle cx="9" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/></svg>
-      <span class="cart-label">Carrito</span><span class="cart-count" data-cart-count>0</span>
+
+    <button class="cart-open" data-cart-open aria-label="Abrir carrito de compras">
+      <svg aria-hidden="true" viewBox="0 0 24 24">
+        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
+      </svg>
+      <span class="cart-label">Carrito</span>
+      <span class="cart-count" data-cart-count>0</span>
     </button>
   </div>
-  <nav class="category-nav" id="category-nav" aria-label="Categorías">
+
+  <nav class="category-nav" id="category-nav" aria-label="Navegación por categorías">
     <div class="container category-scroll">
       <span class="cat-lead" aria-hidden="true">
-        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
         Categorías
       </span>
-      <a href="/productos" class={todosActive ? 'cat-chip active' : 'cat-chip'} aria-current={todosActive ? 'page' : undefined}>Todos</a>
+      <a href="/productos" class={todosActive ? 'cat-chip active' : 'cat-chip'} aria-current={todosActive ? 'page' : undefined}>
+        Todos
+      </a>
       {mainCategories.map((category) => (
         <a
           href={`/categoria/${category.slug}`}
           class={activeSlug === category.slug ? 'cat-chip active' : 'cat-chip'}
           aria-current={activeSlug === category.slug ? 'page' : undefined}
-        >{category.name}</a>
+        >
+          {category.name}
+        </a>
       ))}
       {moreCategories.length > 0 && (
         <div class="more-cats" data-more-cats>
-          <button type="button" class="more-toggle" data-more-toggle aria-expanded="false" aria-controls="more-cats-menu">Más categorías ▾</button>
+          <button type="button" class="more-toggle" data-more-toggle aria-expanded="false" aria-controls="more-cats-menu">
+            <span>Más categorías</span>
+            <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+          </button>
+          
+          <div class="cats-modal-overlay" data-more-overlay hidden></div>
           <div class="more-menu" id="more-cats-menu" data-more-menu hidden>
-            {moreCategories.map((category) => (
-              <a
-                href={`/categoria/${category.slug}`}
-                class={activeSlug === category.slug ? 'active' : undefined}
-                aria-current={activeSlug === category.slug ? 'page' : undefined}
-              >{category.name}</a>
-            ))}
+            <div class="more-menu-header">
+              <strong>Más categorías</strong>
+              <button type="button" class="more-menu-close" data-more-close aria-label="Cerrar menú">×</button>
+            </div>
+            <div class="more-menu-list">
+              {moreCategories.map((category) => (
+                <a
+                  href={`/categoria/${category.slug}`}
+                  class={activeSlug === category.slug ? 'active' : undefined}
+                  aria-current={activeSlug === category.slug ? 'page' : undefined}
+                >
+                  <span>{category.name}</span>
+                  <small class="cat-badge-count">{category.count}</small>
+                </a>
+              ))}
+            </div>
           </div>
         </div>
       )}
     </div>
   </nav>
 </header>
-<style>
-.site-header{position:relative;z-index:30;background:var(--navy);color:#fff;box-shadow:0 4px 18px rgba(23,37,66,.14)}
-.topbar{height:58px;display:grid;grid-template-columns:auto minmax(200px,1fr) auto;align-items:center;gap:16px}
-.brand{height:42px;width:138px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#fff;padding:4px 9px;text-decoration:none}
-.brand img{max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain}
-.search{position:relative}
-.search svg{position:absolute;left:14px;top:50%;width:18px;height:18px;transform:translateY(-50%);fill:none;stroke:#667085;stroke-width:2;stroke-linecap:round}
-.search input{width:100%;border:0;border-radius:999px;padding:10px 16px 10px 42px;font-size:16px;outline:none;transition:box-shadow .15s ease}
-.search input:focus{box-shadow:0 0 0 3px var(--teal)}
-.cart-open{border:0;background:var(--teal);color:#fff;border-radius:999px;padding:9px 14px;font-weight:800;display:flex;align-items:center;gap:7px;transition:background .15s ease,transform .15s ease}
-.cart-open:hover{background:var(--teal-dark);transform:translateY(-1px)}
-.cart-open:active{transform:translateY(0)}
-.cart-open svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2}
-.cart-count{display:grid;place-items:center;background:white;color:var(--teal-dark);border-radius:999px;min-width:21px;height:21px;padding:0 5px;font-size:.72rem;font-weight:900}
 
-/* Compact, light category bar — no sparse navy band, pill chips with a clear active state. */
-.category-nav{background:var(--paper);border-top:1px solid rgba(255,255,255,.06)}
-/* Desktop: all chips + "Más categorías" fit on one line, no horizontal overflow/scroll. */
-.category-scroll{display:flex;align-items:center;flex-wrap:nowrap;gap:7px;padding-top:8px;padding-bottom:8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-.category-scroll::-webkit-scrollbar{display:none}
-.cat-lead{flex:none;display:inline-flex;align-items:center;gap:6px;color:var(--ink-soft);font-size:.78rem;font-weight:800;padding-right:4px;margin-right:2px;border-right:1px solid var(--line)}
-.cat-lead svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
-.cat-chip{flex:0 1 auto;min-width:0;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--navy);text-decoration:none;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 14px;font-size:.82rem;font-weight:700;transition:background .15s ease,color .15s ease,border-color .15s ease}
-.cat-chip:hover{background:var(--teal-soft);border-color:var(--teal);color:var(--teal-dark)}
-.cat-chip.active{background:var(--teal);border-color:var(--teal);color:#fff}
-.more-cats{flex:none;position:relative}
-.more-toggle{border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:999px;padding:7px 14px;font-size:.82rem;font-weight:800}
-.more-toggle:hover{background:var(--teal-soft);border-color:var(--teal);color:var(--teal-dark)}
-.more-menu{position:absolute;top:calc(100% + 8px);right:0;z-index:35;background:#fff;border-radius:14px;box-shadow:var(--shadow-lift);padding:8px;min-width:210px;max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
-.more-menu[hidden]{display:none}
-.more-menu a{color:var(--ink);text-decoration:none;padding:9px 12px;border-radius:9px;font-size:.86rem}
-.more-menu a:hover{background:var(--teal-soft);color:var(--teal-dark)}
-.more-menu a.active{background:var(--teal);color:#fff}
-@media(max-width:680px){
-  .topbar{height:auto;grid-template-columns:auto 1fr auto;gap:9px;padding-top:8px;padding-bottom:8px}
-  .brand{width:112px;height:38px;padding:3px 7px}
-  .search{grid-column:1/-1;grid-row:2}
-  .cart-label{display:none}
-  .cart-open{padding:0;width:40px;height:40px;justify-content:center;position:relative}
-  .cart-open .cart-count{position:absolute;top:-4px;right:-4px}
-  /* Mobile: swipeable horizontal slider — always visible, not hidden behind a menu. */
-  .category-scroll{gap:6px;padding-top:7px;padding-bottom:7px;overflow-x:auto}
-  .cat-lead{font-size:.72rem;padding-right:3px}
-  .cat-lead svg{width:15px;height:15px}
-  .cat-chip,.more-toggle{padding:6px 12px;font-size:.78rem}
-  /* In the mobile slider chips keep full width (swipe reveals them) — no ellipsis cap. */
-  .cat-chip{flex:none;max-width:none;overflow:visible;text-overflow:clip}
-  /* On mobile the dropdown opens as a left-anchored sheet so it never overflows the viewport. */
-  .more-menu{position:fixed;left:10px;right:10px;top:auto;min-width:0;max-height:50vh}
-}
+<style>
+  .site-header {
+    position: relative;
+    z-index: 40;
+    background: var(--navy);
+    color: #ffffff;
+    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.12);
+  }
+  .topbar {
+    height: 64px;
+    display: grid;
+    grid-template-columns: auto minmax(220px, 1fr) auto;
+    align-items: center;
+    gap: 18px;
+  }
+  .brand {
+    height: 44px;
+    width: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #ffffff;
+    padding: 4px 10px;
+    text-decoration: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  .brand img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+  .search {
+    position: relative;
+  }
+  .search svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    width: 18px;
+    height: 18px;
+    transform: translateY(-50%);
+    fill: none;
+    stroke: var(--ink-soft);
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+  .search input {
+    width: 100%;
+    border: 0;
+    border-radius: var(--radius-pill);
+    padding: 11px 18px 11px 44px;
+    font-size: 0.92rem;
+    outline: none;
+    background: #ffffff;
+    color: var(--ink);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: box-shadow 0.15s ease;
+  }
+  .search input:focus {
+    box-shadow: 0 0 0 3px var(--teal);
+  }
+
+  .cart-open {
+    border: 0;
+    background: var(--teal);
+    color: #ffffff;
+    border-radius: var(--radius-pill);
+    padding: 10px 16px;
+    font-weight: 800;
+    font-size: 0.88rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  .cart-open:hover {
+    background: var(--teal-dark);
+    transform: translateY(-1px);
+  }
+  .cart-open:active {
+    transform: translateY(0);
+  }
+  .cart-open svg {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .cart-count {
+    display: grid;
+    place-items: center;
+    background: #ffffff;
+    color: var(--teal-dark);
+    border-radius: var(--radius-pill);
+    min-width: 22px;
+    height: 22px;
+    padding: 0 6px;
+    font-size: 0.74rem;
+    font-weight: 900;
+  }
+
+  /* Compact, clean category bar with smooth scroll */
+  .category-nav {
+    background: var(--paper);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--line);
+  }
+  .category-scroll {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .category-scroll::-webkit-scrollbar {
+    display: none;
+  }
+  .cat-lead {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--ink-soft);
+    font-size: 0.78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding-right: 6px;
+    margin-right: 2px;
+    border-right: 1px solid var(--line);
+  }
+  .cat-lead svg {
+    width: 16px;
+    height: 16px;
+  }
+  .cat-chip {
+    flex: 0 1 auto;
+    min-width: 0;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--navy);
+    text-decoration: none;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    padding: 7px 15px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  }
+  .cat-chip:hover {
+    background: var(--teal-soft);
+    border-color: var(--teal);
+    color: var(--teal-dark);
+    transform: translateY(-1px);
+  }
+  .cat-chip.active {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.25);
+  }
+
+  .more-cats {
+    flex: none;
+    position: relative;
+  }
+  .more-toggle {
+    border: 1px solid var(--line);
+    background: #ffffff;
+    color: var(--navy);
+    border-radius: var(--radius-pill);
+    padding: 7px 14px;
+    font-size: 0.82rem;
+    font-weight: 750;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  }
+  .more-toggle:hover {
+    background: var(--teal-soft);
+    border-color: var(--teal);
+    color: var(--teal-dark);
+  }
+  .chevron-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .more-menu-header {
+    display: none;
+  }
+
+  /* Desktop dropdown */
+  .more-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 60;
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-lift);
+    padding: 8px;
+    min-width: 230px;
+    max-height: 60vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .more-menu[hidden] {
+    display: none !important;
+  }
+  .more-menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .more-menu a {
+    color: var(--ink);
+    text-decoration: none;
+    padding: 9px 14px;
+    border-radius: 10px;
+    font-size: 0.86rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .more-menu a:hover {
+    background: var(--teal-soft);
+    color: var(--teal-dark);
+  }
+  .more-menu a.active {
+    background: var(--teal);
+    color: #ffffff;
+  }
+  .cat-badge-count {
+    font-size: 0.72rem;
+    background: var(--paper);
+    color: var(--ink-soft);
+    padding: 2px 7px;
+    border-radius: var(--radius-pill);
+    font-weight: 700;
+  }
+  .more-menu a.active .cat-badge-count {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+  }
+
+  .cats-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(3px);
+    z-index: 95;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .cats-modal-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  @media (max-width: 680px) {
+    .topbar {
+      height: auto;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+    .brand {
+      width: 116px;
+      height: 38px;
+      padding: 3px 8px;
+    }
+    .search {
+      grid-column: 1 / -1;
+      grid-row: 2;
+    }
+    .cart-label {
+      display: none;
+    }
+    .cart-open {
+      padding: 0;
+      width: 42px;
+      height: 42px;
+      justify-content: center;
+      position: relative;
+    }
+    .cart-open .cart-count {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+    }
+    .category-scroll {
+      gap: 6px;
+      padding-top: 8px;
+      padding-bottom: 8px;
+      overflow-x: auto;
+    }
+    .cat-lead {
+      font-size: 0.72rem;
+      padding-right: 4px;
+    }
+    .cat-chip, .more-toggle {
+      padding: 6px 13px;
+      font-size: 0.8rem;
+      flex: none;
+      max-width: none;
+      overflow: visible;
+    }
+
+    /* Fixed Modal Bottom-Sheet on mobile: opens cleanly from ANY position on page */
+    .more-menu {
+      position: fixed !important;
+      left: 0 !important;
+      right: 0 !important;
+      bottom: 0 !important;
+      top: auto !important;
+      width: 100% !important;
+      min-width: 0 !important;
+      max-height: 75vh !important;
+      border-radius: 20px 20px 0 0 !important;
+      z-index: 100 !important;
+      padding: 0 0 env(safe-area-inset-bottom) !important;
+      transform: translateY(100%);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.25) !important;
+    }
+    .more-menu.open {
+      transform: translateY(0);
+    }
+    .more-menu-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+    }
+    .more-menu-header strong {
+      font-size: 1.05rem;
+      color: var(--navy);
+    }
+    .more-menu-close {
+      border: 0;
+      background: none;
+      font-size: 1.8rem;
+      line-height: 1;
+      color: var(--ink-soft);
+      cursor: pointer;
+    }
+    .more-menu-list {
+      padding: 12px 16px 20px;
+      overflow-y: auto;
+    }
+  }
 </style>
+
 <script>
-  // "Más categorías" dropdown (keyboard + touch accessible, vanilla).
   const moreWrap = document.querySelector<HTMLElement>('[data-more-cats]');
   const moreToggle = moreWrap?.querySelector<HTMLButtonElement>('[data-more-toggle]');
   const moreMenu = moreWrap?.querySelector<HTMLElement>('[data-more-menu]');
+  const moreOverlay = moreWrap?.querySelector<HTMLElement>('[data-more-overlay]');
+  const moreClose = moreWrap?.querySelector<HTMLButtonElement>('[data-more-close]');
+
   const setMore = (open: boolean) => {
     if (!moreMenu || !moreToggle) return;
-    moreMenu.hidden = !open;
-    moreToggle.setAttribute('aria-expanded', String(open));
+    if (open) {
+      moreMenu.hidden = false;
+      moreMenu.style.display = 'flex';
+      void moreMenu.offsetWidth;
+      moreMenu.classList.add('open');
+      moreOverlay?.removeAttribute('hidden');
+      moreOverlay?.classList.add('open');
+      moreToggle.setAttribute('aria-expanded', 'true');
+      if (window.innerWidth <= 680) {
+        document.body.style.overflow = 'hidden';
+      }
+    } else {
+      moreMenu.classList.remove('open');
+      moreOverlay?.classList.remove('open');
+      moreToggle.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+      window.setTimeout(() => {
+        if (!moreMenu.classList.contains('open')) {
+          moreMenu.hidden = true;
+          moreMenu.style.display = 'none';
+          moreOverlay?.setAttribute('hidden', '');
+        }
+      }, 200);
+    }
   };
+
   moreToggle?.addEventListener('click', (e) => {
     e.stopPropagation();
-    const isHidden = moreMenu ? Boolean(moreMenu.hidden) : true;
-    setMore(isHidden);
+    const isOpen = moreMenu ? moreMenu.classList.contains('open') : false;
+    setMore(!isOpen);
   });
+
+  moreClose?.addEventListener('click', () => setMore(false));
+  moreOverlay?.addEventListener('click', () => setMore(false));
+
   document.addEventListener('click', (e) => {
-    if (moreWrap && e.target instanceof Node && !moreWrap.contains(e.target)) setMore(false);
+    if (moreWrap && e.target instanceof Node && !moreWrap.contains(e.target)) {
+      setMore(false);
+    }
   });
+
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') setMore(false);
   });
+
   moreMenu?.addEventListener('click', (e) => {
-    if (e.target instanceof Element && e.target.closest('a')) setMore(false);
+    if (e.target instanceof Element && e.target.closest('a')) {
+      setMore(false);
+    }
   });
 </script>
+
