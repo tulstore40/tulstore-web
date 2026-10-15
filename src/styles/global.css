@@ -133,14 +133,17 @@ img { max-width: 100%; }
 }
 
 /* Responsive product grid ladder:
-   Mobile (<600px): 2 columnas para fotos amplias, nítidas y detalladas
+   Mobile (<600px): 2 columnas compactas y comerciales
    Tablet (600px - 899px): 3 columnas
    Desktop (900px - 1199px): 4 columnas
-   Large screens (>=1200px): 4 columnas con espacio generoso (o 5 en ultra-wide) */
+   Large screens (>=1200px): 4 columnas con espacio generoso */
 .product-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
+}
+@media (max-width: 480px) {
+  .product-grid { gap: 8px; }
 }
 @media (min-width: 600px) {
   .product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
@@ -156,36 +159,41 @@ img { max-width: 100%; }
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
+  gap: 6px;
+  font-size: 0.8rem;
   color: var(--ink-soft);
-  margin: 20px 0;
+  margin: 12px 0 8px;
 }
 .breadcrumbs a { text-decoration: none; color: var(--ink-soft); transition: color 0.15s ease; }
 .breadcrumbs a:hover { color: var(--navy); text-decoration: underline; }
-.page-shell { padding-bottom: 72px; }
+.page-shell { padding-bottom: 48px; }
 
 .empty-state {
   background: white;
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
-  padding: 48px 24px;
+  padding: 36px 20px;
   text-align: center;
   color: var(--ink-soft);
   box-shadow: var(--shadow-sm);
-  font-size: 0.95rem;
+  font-size: 0.92rem;
 }
 
 @media (max-width: 680px) {
-  .container { width: min(100% - 24px, 1200px); }
-  .section { padding: 30px 0; }
-  .section-head { align-items: flex-start; margin-bottom: 16px; }
+  .container { width: min(100% - 20px, 1200px); }
+  .section { padding: 20px 0; }
+  .section-head { align-items: flex-start; margin-bottom: 12px; }
+  .breadcrumbs { margin: 8px 0 4px; font-size: 0.74rem; }
+}
+@media (max-width: 480px) {
+  .container { width: min(100% - 16px, 1200px); }
+  .section { padding: 16px 0; }
 }
 
 /* Shared catalog items performance optimization */
 .grid-item {
   content-visibility: auto;
-  contain-intrinsic-size: 0 340px;
+  contain-intrinsic-size: 0 250px;
 }
 .product-grid:not(.js-ready) .grid-item { display: block !important; }
 .catalog-root:not(.js-ready) [data-see-more],

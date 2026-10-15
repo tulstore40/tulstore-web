@@ -14,18 +14,39 @@ const { products, config, categoryFilter = true, categories = [] } = Astro.props
 
 // Serialized config consumed by the boot script
 const dataConfig = JSON.stringify({
-  pageSize: config.pageSize,
-  defaultSort: config.defaultSort,
+  pageSize: config.pageSize || 24,
+  defaultSort: config.defaultSort || 'relevancia',
   categoryFilter,
   priceFilter: config.priceFilter,
 });
+
+// Render the initial 24 products in SSR for instant SEO and FCP without bloat
+const INITIAL_SSR_COUNT = 24;
+const initialProducts = products.slice(0, INITIAL_SSR_COUNT);
+
+// Ultra-compact JSON payload containing the entire catalog data (~120KB for 1,000 products instead of 6MB of HTML)
+const compactCatalogJson = products.map((p, index) => ({
+  id: p.tulstoreId,
+  ref: p.referencia || '',
+  name: p.nombre,
+  slug: p.slug,
+  color: p.color || '',
+  price: p.precio,
+  cat: p.categoria,
+  catSlug: p.categoriaSlug,
+  img: p.imagen,
+  idx: index,
+}));
 ---
 <section class="catalog-root" data-catalog-root data-config={dataConfig}>
+  <script type="application/json" id="catalog-products-json" set:html={JSON.stringify(compactCatalogJson)}></script>
+
+  <!-- Sticky Quick Bar -->
   <div class="sticky-bar">
     <div class="container bar-inner">
       <div class="bar-search">
         <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input type="search" name="q" data-catalog-search placeholder="Buscar en el catálogo..." aria-label="Buscar en el catálogo" />
+        <input type="search" name="q" data-catalog-search placeholder="Buscar en catálogo..." aria-label="Buscar en el catálogo" />
       </div>
       <button type="button" class="bar-btn" data-filter-open aria-expanded="false" aria-controls="filter-sheet">
         <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
@@ -41,9 +62,11 @@ const dataConfig = JSON.stringify({
     </div>
   </div>
 
+  <!-- In-place Category Chips Bar -->
   {categoryFilter && categories.length > 0 && (
     <div class="chips-row">
       <div class="container chips-scroll">
+        <button type="button" class="chip active" data-filter-chip="" aria-pressed="true">Todas</button>
         {categories.map((c) => (
           <button type="button" class="chip" data-filter-chip={c.slug} aria-pressed="false">{c.name}</button>
         ))}
@@ -55,31 +78,30 @@ const dataConfig = JSON.stringify({
     <div class="catalog-count-row">
       <span class="catalog-count" data-catalog-count>{products.length} productos</span>
     </div>
-    <div class="product-grid">
-      {products.map((product) => (
-        <div
-          class="grid-item"
-          data-cat={product.categoriaSlug}
-          data-price={product.precio}
-          data-name={product.nombre}
-          data-haystack={`${product.nombre} ${product.referencia} ${product.color} ${product.categoria}`.toLocaleLowerCase('es')}
-          hidden
-        >
+
+    <!-- The Product Grid: Only holds active rendered cards, avoiding 1,000 DOM nodes! -->
+    <div class="product-grid" data-catalog-grid>
+      {initialProducts.map((product) => (
+        <div class="grid-item" data-id={product.tulstoreId}>
           <ProductCard product={product} />
         </div>
       ))}
     </div>
+
     <div class="empty-state" data-catalog-empty hidden>
-      No encontramos productos que coincidan con los filtros seleccionados.
+      <div class="empty-icon">🔍</div>
+      <strong>No encontramos productos</strong>
+      <p>Intenta con otra palabra clave o restablece los filtros aplicados.</p>
     </div>
-    <div class="see-more-wrap" hidden>
-      <button type="button" class="btn btn-primary see-more-btn" data-see-more hidden>
+
+    <div class="see-more-wrap" data-see-more-wrap>
+      <button type="button" class="btn btn-primary see-more-btn" data-see-more>
         <span>Ver más</span>
       </button>
     </div>
   </div>
 
-  <!-- Filter bottom-sheet -->
+  <!-- Filter Bottom-Sheet Modal -->
   <div class="filter-overlay" data-filter-overlay></div>
   <div
     class="filter-sheet"
@@ -91,7 +113,7 @@ const dataConfig = JSON.stringify({
     aria-hidden="true"
   >
     <div class="sheet-head">
-      <strong id="filter-sheet-title">Filtros</strong>
+      <strong id="filter-sheet-title">Filtros de búsqueda</strong>
       <button type="button" class="sheet-close" data-filter-close aria-label="Cerrar filtros">×</button>
     </div>
     <div class="sheet-body">
@@ -99,7 +121,7 @@ const dataConfig = JSON.stringify({
         <label class="field">
           <span>Categoría</span>
           <select data-filter-cat>
-            <option value="">Todas las categorías</option>
+            <option value="">Todas las categorías ({products.length})</option>
             {categories.map((c) => <option value={c.slug}>{c.name} ({c.count})</option>)}
           </select>
         </label>
@@ -107,11 +129,11 @@ const dataConfig = JSON.stringify({
       {config.priceFilter && (
         <div class="field-row">
           <label class="field">
-            <span>Precio mínimo</span>
+            <span>Precio mínimo ($)</span>
             <input type="number" inputmode="numeric" min="0" data-filter-min placeholder="0" />
           </label>
           <label class="field">
-            <span>Precio máximo</span>
+            <span>Precio máximo ($)</span>
             <input type="number" inputmode="numeric" min="0" data-filter-max placeholder="Sin límite" />
           </label>
         </div>
@@ -131,9 +153,8 @@ const dataConfig = JSON.stringify({
 </section>
 
 <script>
-  import { initCatalog, isSortKey } from '../scripts/catalog-controller';
+  import { initCatalog } from '../scripts/catalog-controller';
   import type { CatalogControllerConfig } from '../scripts/catalog-controller';
-  import type { SortKey } from '../lib/siteConfig';
 
   const DEFAULTS: CatalogControllerConfig = {
     pageSize: 24,
@@ -142,226 +163,273 @@ const dataConfig = JSON.stringify({
     priceFilter: true,
   };
 
-  function validateConfig(raw: unknown): CatalogControllerConfig {
-    if (typeof raw !== 'object' || raw === null) return DEFAULTS;
-    const obj = raw as Record<string, unknown>;
-
-    const pageSizeNum = Number(obj.pageSize);
-    const pageSize = Number.isNaN(pageSizeNum) || pageSizeNum <= 0 ? 24 : Math.floor(pageSizeNum);
-
-    const defaultSort: SortKey = isSortKey(obj.defaultSort) ? obj.defaultSort : 'relevancia';
-
-    const categoryFilter = typeof obj.categoryFilter === 'boolean' ? obj.categoryFilter : true;
-    const priceFilter = typeof obj.priceFilter === 'boolean' ? obj.priceFilter : true;
-
-    return { pageSize, defaultSort, categoryFilter, priceFilter };
-  }
-
   const root = document.querySelector<HTMLElement>('[data-catalog-root]');
   if (root) {
-    let parsed: unknown = {};
-    try {
-      parsed = JSON.parse(root.dataset.config ?? '{}');
-    } catch {
-      parsed = {};
+    let parsedConfig: CatalogControllerConfig = DEFAULTS;
+    const raw = root.dataset.config;
+    if (raw) {
+      try {
+        const c = JSON.parse(raw);
+        parsedConfig = {
+          pageSize: typeof c.pageSize === 'number' && c.pageSize > 0 ? c.pageSize : DEFAULTS.pageSize,
+          defaultSort: c.defaultSort || DEFAULTS.defaultSort,
+          categoryFilter: typeof c.categoryFilter === 'boolean' ? c.categoryFilter : DEFAULTS.categoryFilter,
+          priceFilter: typeof c.priceFilter === 'boolean' ? c.priceFilter : DEFAULTS.priceFilter,
+        };
+      } catch (e) {
+        console.error('Error parsing catalog config:', e);
+      }
     }
-    initCatalog(root, validateConfig(parsed));
+    initCatalog(root, parsedConfig);
   }
 </script>
 
 <style>
-  .sticky-bar { display: none; }
-  .bar-inner { display: flex; align-items: center; gap: 8px; padding: 10px 0; }
-  .bar-search { position: relative; flex: 1 1 auto; min-width: 0; }
+  .catalog-root {
+    position: relative;
+    padding-bottom: 48px;
+  }
+
+  .sticky-bar {
+    position: sticky;
+    top: 54px;
+    z-index: 35;
+    background: #ffffff;
+    border-bottom: 1px solid var(--line);
+    padding: 8px 0;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+    transition: top 0.15s ease;
+  }
+  .bar-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .bar-search {
+    flex: 1;
+    position: relative;
+    min-width: 0;
+  }
   .bar-search svg {
     position: absolute;
     left: 12px;
     top: 50%;
-    width: 17px;
-    height: 17px;
     transform: translateY(-50%);
+    width: 15px;
+    height: 15px;
     fill: none;
-    stroke: var(--ink-soft);
-    stroke-width: 2;
-    stroke-linecap: round;
+    stroke: var(--ink-muted);
+    stroke-width: 2.2;
+    pointer-events: none;
   }
   .bar-search input {
     width: 100%;
     border: 1px solid var(--line);
     border-radius: var(--radius-pill);
-    padding: 10px 14px 10px 36px;
-    font-size: 0.9rem;
+    padding: 7px 12px 7px 34px;
+    font-size: 0.84rem;
     outline: none;
-    background: #ffffff;
-    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
-    transition: box-shadow 0.15s ease, border-color 0.15s ease;
+    background: var(--paper);
+    color: var(--ink);
+    transition: border-color 0.15s ease, background 0.15s ease;
   }
   .bar-search input:focus {
-    box-shadow: 0 0 0 3px var(--teal-soft);
     border-color: var(--teal);
+    background: #ffffff;
   }
+
   .bar-btn {
     flex: none;
-    position: relative;
     border: 1px solid var(--line);
     background: #ffffff;
     color: var(--navy);
     border-radius: var(--radius-pill);
-    height: 40px;
-    padding: 0 14px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    font-weight: 750;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-weight: 750;
-    font-size: 0.82rem;
-    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
     cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .bar-btn:hover {
+    background: var(--teal-soft);
+    border-color: var(--teal);
+    color: var(--teal-dark);
   }
   .bar-btn svg {
-    width: 17px;
-    height: 17px;
+    width: 15px;
+    height: 15px;
     fill: none;
     stroke: currentColor;
     stroke-width: 2;
-    stroke-linecap: round;
-  }
-  .bar-btn.cart {
-    background: var(--teal);
-    border-color: var(--teal);
-    color: #ffffff;
-    width: 40px;
-    padding: 0;
-    justify-content: center;
-  }
-  .bar-btn .cart-count {
-    position: absolute;
-    top: -4px;
-    right: -4px;
-    display: grid;
-    place-items: center;
-    background: #ffffff;
-    color: var(--teal-dark);
-    border-radius: var(--radius-pill);
-    min-width: 20px;
-    height: 20px;
-    padding: 0 5px;
-    font-size: 0.68rem;
-    font-weight: 900;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
   }
   .filter-count {
-    display: grid;
-    place-items: center;
-    background: var(--coral);
+    background: var(--teal);
     color: #ffffff;
     border-radius: var(--radius-pill);
-    min-width: 19px;
-    height: 19px;
-    padding: 0 4px;
-    font-size: 0.66rem;
+    padding: 1px 6px;
+    font-size: 0.68rem;
     font-weight: 900;
   }
 
-  .chips-row { margin-bottom: 8px; }
+  .bar-btn.cart {
+    background: var(--navy);
+    color: #ffffff;
+    border-color: var(--navy);
+    padding: 6px 10px;
+  }
+  .bar-btn.cart:hover {
+    background: var(--teal-dark);
+    border-color: var(--teal-dark);
+  }
+  .bar-btn.cart .cart-count {
+    background: #ffffff;
+    color: var(--navy);
+    border-radius: var(--radius-pill);
+    padding: 1px 5px;
+    font-size: 0.68rem;
+    font-weight: 900;
+  }
+
+  /* In-place Category Chips */
+  .chips-row {
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    padding: 6px 0;
+  }
   .chips-scroll {
     display: flex;
-    gap: 8px;
+    align-items: center;
+    gap: 6px;
     overflow-x: auto;
-    padding: 8px 0;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
   }
-  .chips-scroll::-webkit-scrollbar { display: none; }
+  .chips-scroll::-webkit-scrollbar {
+    display: none;
+  }
   .chip {
     flex: none;
     border: 1px solid var(--line);
     background: #ffffff;
+    color: var(--ink);
     border-radius: var(--radius-pill);
-    padding: 7px 15px;
-    font-size: 0.8rem;
+    padding: 4px 11px;
+    font-size: 0.76rem;
     font-weight: 700;
-    color: var(--navy);
     cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   }
   .chip:hover {
     background: var(--teal-soft);
     border-color: var(--teal);
     color: var(--teal-dark);
-    transform: translateY(-1px);
   }
   .chip.active {
     background: var(--teal);
     border-color: var(--teal);
     color: #ffffff;
-    box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
+    box-shadow: 0 1px 4px rgba(13, 148, 136, 0.25);
   }
 
-  .catalog-body { padding-top: 14px; }
-  .catalog-count-row { margin-bottom: 14px; }
-  .catalog-count { color: var(--ink-soft); font-size: 0.86rem; font-weight: 600; }
-  
+  .catalog-body {
+    padding-top: 14px;
+  }
+  .catalog-count-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+  }
+  .catalog-count {
+    color: var(--ink-soft);
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  .empty-state {
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    padding: 36px 20px;
+    text-align: center;
+    margin: 24px 0;
+  }
+  .empty-icon {
+    font-size: 2rem;
+    margin-bottom: 8px;
+  }
+  .empty-state strong {
+    display: block;
+    font-size: 1.1rem;
+    color: var(--navy);
+    margin-bottom: 4px;
+  }
+  .empty-state p {
+    color: var(--ink-soft);
+    font-size: 0.86rem;
+    margin: 0;
+  }
+
   .see-more-wrap {
     display: flex;
     justify-content: center;
-    margin: 36px 0 18px;
+    margin-top: 24px;
+    padding-bottom: 12px;
   }
   .see-more-btn {
-    min-width: 220px;
-    padding: 13px 26px;
-    font-size: 0.94rem;
+    padding: 10px 28px;
+    font-size: 0.88rem;
     font-weight: 800;
-    border-radius: var(--radius-pill);
-    background: var(--navy);
-    color: #ffffff;
-    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.16);
-    cursor: pointer;
-    transition: transform 0.18s ease, background 0.15s ease, box-shadow 0.18s ease;
-  }
-  .see-more-btn:hover {
-    transform: translateY(-2px);
-    background: var(--navy-surface);
-    box-shadow: 0 6px 22px rgba(15, 23, 42, 0.24);
   }
 
+  /* Filter Bottom-Sheet Modal */
   .filter-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.55);
-    backdrop-filter: blur(3px);
-    z-index: 70;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 998;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.25s ease;
+    transition: opacity 0.22s ease;
   }
-  .filter-overlay.open { opacity: 1; pointer-events: auto; }
+  .filter-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
 
   .filter-sheet {
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 75;
+    z-index: 999;
     background: #ffffff;
-    border-radius: 24px 24px 0 0;
-    transform: translateY(100%);
-    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 -14px 40px rgba(0, 0, 0, 0.2);
+    border-radius: 20px 20px 0 0;
     max-height: 85vh;
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.28);
+    transform: translateY(100%);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
-    padding-bottom: env(safe-area-inset-bottom);
   }
-  .filter-sheet.open { transform: translateY(0); }
-
+  .filter-sheet.open {
+    transform: translateY(0);
+  }
   .sheet-head {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 18px 22px;
+    padding: 16px 20px;
     border-bottom: 1px solid var(--line);
+    flex: none;
   }
-  .sheet-head strong { font-size: 1.15rem; color: var(--navy); font-weight: 800; }
+  .sheet-head strong {
+    font-size: 1.05rem;
+    color: var(--navy);
+  }
   .sheet-close {
     border: 0;
     background: none;
@@ -371,55 +439,90 @@ const dataConfig = JSON.stringify({
     cursor: pointer;
   }
   .sheet-body {
-    padding: 20px 22px;
+    padding: 18px 20px;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 18px;
-    overflow-y: auto;
+    gap: 16px;
   }
-  .field { display: flex; flex-direction: column; gap: 7px; }
-  .field > span { font-size: 0.84rem; font-weight: 750; color: var(--navy); }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .field span {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
   .field select, .field input {
     border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 12px 14px;
-    font-size: 0.95rem;
-    background: #ffffff;
+    border-radius: var(--radius-inner);
+    padding: 10px 14px;
+    font-size: 0.88rem;
+    background: var(--paper);
+    color: var(--ink);
     outline: none;
-    min-height: 46px;
-    transition: border-color 0.15s ease, box-shadow 0.15s ease;
   }
   .field select:focus, .field input:focus {
     border-color: var(--teal);
-    box-shadow: 0 0 0 3px var(--teal-soft);
+    background: #ffffff;
   }
-  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .sheet-foot {
-    display: flex;
+  .field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 12px;
-    padding: 16px 22px;
+  }
+  .sheet-foot {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr;
+    gap: 12px;
+    padding: 14px 20px 24px;
     border-top: 1px solid var(--line);
+    background: #ffffff;
+    flex: none;
   }
   .sheet-clear {
-    flex: 1;
     background: var(--paper);
-    color: var(--navy);
+    color: var(--ink);
     border: 1px solid var(--line);
-    border-radius: var(--radius-pill);
   }
-  .sheet-apply { flex: 1.4; border-radius: var(--radius-pill); }
+  .sheet-clear:hover {
+    background: #e2e8f0;
+  }
+  .sheet-apply {
+    background: var(--navy);
+    color: #ffffff;
+  }
+  .sheet-apply:hover {
+    background: var(--teal);
+  }
 
-  @media (max-width: 899px) {
+  @media (max-width: 680px) {
     .sticky-bar {
-      display: block;
-      position: sticky;
-      top: 0;
-      z-index: 50;
-      background: rgba(248, 250, 252, 0.95);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid var(--line);
-      padding-top: env(safe-area-inset-top);
+      top: 48px;
+      padding: 6px 0;
+    }
+    .bar-inner {
+      gap: 6px;
+    }
+    .bar-btn {
+      padding: 5px 10px;
+      font-size: 0.76rem;
+    }
+    .bar-btn span:not(.filter-count):not(.cart-count) {
+      display: inline;
+    }
+    .chips-row {
+      padding: 4px 0;
+    }
+    .catalog-body {
+      padding-top: 8px;
+    }
+    .catalog-count-row {
+      margin-bottom: 6px;
     }
   }
 </style>
-

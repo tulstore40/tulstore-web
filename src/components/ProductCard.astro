@@ -11,26 +11,24 @@ const subtitle = [product.referencia, product.color].filter(Boolean).join(' · '
       alt={product.nombre}
       loading="lazy"
       decoding="async"
-      width="440"
-      height="440"
+      width="360"
+      height="360"
       onerror="this.onerror=null;this.src='/images/tulstore-logo.png';this.style.objectFit='contain';"
     />
   </a>
   <div class="card-content">
     <div class="card-meta">
-      {subtitle && <span class="ref-color">{subtitle}</span>}
+      {subtitle ? <span class="ref-color">{subtitle}</span> : <span class="ref-color">&nbsp;</span>}
       <a class="product-title" href={`/producto/${product.slug}`} title={product.nombre}>
         {product.nombre}
       </a>
     </div>
     <div class="card-footer">
-      <div class="price-wrap">
-        <span class="price-val">{formatCOP(product.precio)}</span>
-      </div>
+      <div class="price-val">{formatCOP(product.precio)}</div>
       <div class="action-buttons">
         <a
           class="btn-icon-wa"
-          href={`https://wa.me/573182022859?text=${encodeURIComponent(`Hola Tulstore, me interesa ${product.nombre} (${product.referencia}) por ${formatCOP(product.precio)}.`)}`}
+          href={`https://wa.me/573182022859?text=${encodeURIComponent(`Hola Tulstore, me interesa ${product.nombre} (${product.referencia || product.tulstoreId}) por ${formatCOP(product.precio)}.`)}`}
           target="_blank"
           rel="noopener"
           aria-label={`Consultar ${product.nombre} por WhatsApp`}
@@ -54,7 +52,7 @@ const subtitle = [product.referencia, product.color].filter(Boolean).join(' · '
           })}
           aria-label={`Agregar ${product.nombre} al carrito`}
         >
-          <svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
           </svg>
           <span class="btn-text">Agregar</span>
@@ -66,20 +64,20 @@ const subtitle = [product.referencia, product.color].filter(Boolean).join(' · '
 
 <style>
   .product-card {
-    background: var(--card);
+    background: #ffffff;
     border: 1px solid var(--line);
     border-radius: var(--radius-card);
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.05);
     overflow: hidden;
     display: flex;
     flex-direction: column;
     height: 100%;
     min-width: 0;
-    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
   }
   .product-card:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-lift);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.09);
     border-color: var(--line-strong);
   }
 
@@ -92,57 +90,59 @@ const subtitle = [product.referencia, product.color].filter(Boolean).join(' · '
     justify-content: center;
     border-bottom: 1px solid #f1f5f9;
     overflow: hidden;
-    padding: 12px;
+    padding: 8px;
     text-decoration: none;
   }
   .image-wrap img {
     width: 100%;
     height: 100%;
     object-fit: contain;
-    transition: transform 0.25s ease;
+    transition: transform 0.22s ease;
   }
   .product-card:hover .image-wrap img {
-    transform: scale(1.04);
+    transform: scale(1.03);
   }
 
   .card-content {
-    padding: 12px 14px 14px;
+    padding: 9px 10px 10px;
     display: flex;
     flex-direction: column;
     flex: 1;
-    gap: 8px;
+    gap: 6px;
     background: #ffffff;
   }
 
   .card-meta {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
     flex: 1;
   }
 
   .ref-color {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 700;
     color: var(--ink-muted);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
+    letter-spacing: 0.03em;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    display: block;
+    line-height: 1.2;
   }
 
   .product-title {
     font-weight: 700;
-    font-size: 0.88rem;
-    line-height: 1.3;
+    font-size: 0.82rem;
+    line-height: 1.25;
     text-decoration: none;
     color: var(--ink);
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    min-height: 2.6em;
+    height: 2.5em;
     transition: color 0.15s ease;
   }
   .product-title:hover {
@@ -153,63 +153,56 @@ const subtitle = [product.referencia, product.color].filter(Boolean).join(' · '
     margin-top: auto;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding-top: 4px;
+    gap: 7px;
+    padding-top: 2px;
   }
 
-  .price-wrap {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-  }
   .price-val {
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     font-weight: 850;
     color: var(--navy);
     letter-spacing: -0.02em;
+    line-height: 1.1;
   }
 
   .action-buttons {
     display: flex;
-    gap: 7px;
+    gap: 5px;
     align-items: center;
   }
 
   .btn-add-cart {
     flex: 1 1 auto;
     min-width: 0;
-    min-height: 38px;
-    height: 38px;
-    padding: 0 12px;
+    height: 33px;
+    padding: 0 10px;
     background: var(--teal);
     color: #ffffff;
     border: 0;
-    border-radius: 10px;
-    font-size: 0.84rem;
+    border-radius: 8px;
+    font-size: 0.78rem;
     font-weight: 750;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 5px;
     cursor: pointer;
-    box-shadow: 0 2px 6px rgba(13, 148, 136, 0.2);
-    transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow: 0 1px 4px rgba(13, 148, 136, 0.2);
+    transition: background 0.15s ease, transform 0.12s ease;
   }
   .btn-add-cart:hover {
     background: var(--teal-dark);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
   }
   .btn-add-cart:active {
-    transform: translateY(0);
+    transform: scale(0.98);
   }
   .btn-add-cart.added {
     background: #059669 !important;
     color: #ffffff !important;
   }
   .btn-add-cart .cart-icon {
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     flex: none;
   }
   .btn-add-cart .btn-text {
@@ -220,40 +213,40 @@ const subtitle = [product.referencia, product.color].filter(Boolean).join(' · '
 
   .btn-icon-wa {
     flex: none;
-    width: 38px;
-    height: 38px;
+    width: 33px;
+    height: 33px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     background: var(--whatsapp-soft);
     color: var(--whatsapp-dark);
-    border: 1px solid rgba(37, 211, 102, 0.25);
-    border-radius: 10px;
+    border: 1px solid rgba(37, 211, 102, 0.22);
+    border-radius: 8px;
     text-decoration: none;
-    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease;
   }
   .btn-icon-wa:hover {
     background: var(--whatsapp);
     color: #ffffff;
-    border-color: var(--whatsapp);
-    transform: translateY(-1px);
   }
   .btn-icon-wa:active {
-    transform: translateY(0);
+    transform: scale(0.96);
   }
   .btn-icon-wa svg {
-    width: 19px;
-    height: 19px;
+    width: 17px;
+    height: 17px;
   }
 
   @media (max-width: 480px) {
-    .card-content { padding: 10px 11px 12px; gap: 6px; }
-    .product-title { font-size: 0.82rem; }
-    .price-val { font-size: 1.05rem; }
-    .btn-add-cart, .btn-icon-wa { min-height: 36px; height: 36px; }
-    .btn-icon-wa { width: 36px; }
-    .btn-add-cart { font-size: 0.8rem; padding: 0 8px; }
-    .image-wrap { padding: 8px; }
+    .image-wrap { padding: 6px; }
+    .card-content { padding: 7px 8px 8px; gap: 4px; }
+    .ref-color { font-size: 0.65rem; }
+    .product-title { font-size: 0.76rem; height: 2.5em; }
+    .price-val { font-size: 0.98rem; }
+    .btn-add-cart, .btn-icon-wa { height: 31px; }
+    .btn-icon-wa { width: 31px; }
+    .btn-icon-wa svg { width: 15px; height: 15px; }
+    .btn-add-cart { font-size: 0.75rem; padding: 0 6px; }
+    .btn-add-cart .cart-icon { width: 13px; height: 13px; }
   }
 </style>
-

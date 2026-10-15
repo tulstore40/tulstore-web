@@ -9,7 +9,8 @@ const categoryMatch = pathname.match(/^\/categoria\/([^/]+)/);
 const activeSlug = categoryMatch ? decodeURIComponent(categoryMatch[1]) : null;
 const todosActive = pathname === '/productos' || pathname === '/productos/';
 ---
-<header class="site-header">
+
+<header class="site-header" id="site-header">
   <div class="topbar container">
     <a class="brand" href="/" aria-label="Tulstore inicio">
       <img src="/images/tulstore-logo.png" alt="Tulstore" />
@@ -19,7 +20,7 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
       <svg aria-hidden="true" viewBox="0 0 24 24">
         <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
       </svg>
-      <input type="search" name="q" placeholder="Buscar producto, referencia o color..." aria-label="Buscar productos" />
+      <input type="search" name="q" placeholder="Buscar en Tulstore..." aria-label="Buscar productos" />
     </form>
 
     <button class="cart-open" data-cart-open aria-label="Abrir carrito de compras">
@@ -33,13 +34,17 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
 
   <nav class="category-nav" id="category-nav" aria-label="Navegación por categorías">
     <div class="container category-scroll">
-      <span class="cat-lead" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
-        Categorías
-      </span>
+      <button type="button" class="cat-lead-btn" data-mobile-cats-open aria-label="Ver todas las categorías">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="cat-icon">
+          <path d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+        <span>Categorías</span>
+      </button>
+
       <a href="/productos" class={todosActive ? 'cat-chip active' : 'cat-chip'} aria-current={todosActive ? 'page' : undefined}>
         Todos
       </a>
+
       {mainCategories.map((category) => (
         <a
           href={`/categoria/${category.slug}`}
@@ -49,28 +54,34 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
           {category.name}
         </a>
       ))}
+
       {moreCategories.length > 0 && (
-        <div class="more-cats" data-more-cats>
-          <button type="button" class="more-toggle" data-more-toggle aria-expanded="false" aria-controls="more-cats-menu">
+        <div class="more-cats-wrapper" data-more-cats-wrapper>
+          <button
+            type="button"
+            class="cat-chip more-toggle"
+            data-more-cats-toggle
+            aria-expanded="false"
+            aria-controls="desktop-cats-menu"
+          >
             <span>Más categorías</span>
-            <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>
+            <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="m6 9 6 6 6-6"/>
+            </svg>
           </button>
-          
-          <div class="cats-modal-overlay" data-more-overlay hidden></div>
-          <div class="more-menu" id="more-cats-menu" data-more-menu hidden>
-            <div class="more-menu-header">
-              <strong>Más categorías</strong>
-              <button type="button" class="more-menu-close" data-more-close aria-label="Cerrar menú">×</button>
-            </div>
-            <div class="more-menu-list">
+
+          <!-- Desktop Dropdown -->
+          <div class="desktop-cats-dropdown" id="desktop-cats-menu" data-desktop-cats-menu>
+            <div class="dropdown-arrow"></div>
+            <div class="dropdown-list">
               {moreCategories.map((category) => (
                 <a
                   href={`/categoria/${category.slug}`}
-                  class={activeSlug === category.slug ? 'active' : undefined}
+                  class={activeSlug === category.slug ? 'dropdown-item active' : 'dropdown-item'}
                   aria-current={activeSlug === category.slug ? 'page' : undefined}
                 >
-                  <span>{category.name}</span>
-                  <small class="cat-badge-count">{category.count}</small>
+                  <span class="item-name">{category.name}</span>
+                  <span class="item-count">{category.count}</span>
                 </a>
               ))}
             </div>
@@ -79,34 +90,66 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
       )}
     </div>
   </nav>
+
+  <!-- Mobile Bottom-Sheet Modal for Categories -->
+  <div class="mobile-cats-overlay" data-mobile-cats-overlay></div>
+  <div class="mobile-cats-drawer" data-mobile-cats-drawer role="dialog" aria-modal="true" aria-label="Todas las categorías">
+    <div class="drawer-header">
+      <div class="drawer-header-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="drawer-cat-icon">
+          <path d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+        <strong>Todas las categorías</strong>
+      </div>
+      <button type="button" class="drawer-close-btn" data-mobile-cats-close aria-label="Cerrar menú de categorías">×</button>
+    </div>
+    <div class="drawer-body">
+      <a href="/productos" class={todosActive ? 'drawer-item active' : 'drawer-item'}>
+        <span class="item-name">Todos los productos</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="item-chevron"><path d="m9 18 6-6-6-6"/></svg>
+      </a>
+      {categories.map((c) => (
+        <a href={`/categoria/${c.slug}`} class={activeSlug === c.slug ? 'drawer-item active' : 'drawer-item'}>
+          <span class="item-name">{c.name}</span>
+          <span class="item-count-badge">{c.count}</span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="item-chevron"><path d="m9 18 6-6-6-6"/></svg>
+        </a>
+      ))}
+    </div>
+  </div>
 </header>
 
 <style>
+  /* Header pinned to top so categories and search are accessible from any scroll position */
   .site-header {
-    position: relative;
-    z-index: 40;
+    position: sticky;
+    top: 0;
+    z-index: 50;
     background: var(--navy);
     color: #ffffff;
-    box-shadow: 0 4px 20px rgba(15, 23, 42, 0.12);
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.15);
   }
+
   .topbar {
-    height: 64px;
+    height: 54px;
     display: grid;
-    grid-template-columns: auto minmax(220px, 1fr) auto;
+    grid-template-columns: auto minmax(180px, 1fr) auto;
     align-items: center;
-    gap: 18px;
+    gap: 16px;
   }
+
   .brand {
-    height: 44px;
-    width: 140px;
+    height: 38px;
+    width: 126px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 10px;
+    border-radius: 9px;
     background: #ffffff;
-    padding: 4px 10px;
+    padding: 3px 8px;
     text-decoration: none;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    flex: none;
   }
   .brand img {
     max-width: 100%;
@@ -115,35 +158,37 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
     height: auto;
     object-fit: contain;
   }
+
   .search {
     position: relative;
+    max-width: 580px;
   }
   .search svg {
     position: absolute;
-    left: 14px;
+    left: 12px;
     top: 50%;
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     transform: translateY(-50%);
     fill: none;
-    stroke: var(--ink-soft);
-    stroke-width: 2;
+    stroke: var(--ink-muted);
+    stroke-width: 2.2;
     stroke-linecap: round;
   }
   .search input {
     width: 100%;
     border: 0;
     border-radius: var(--radius-pill);
-    padding: 11px 18px 11px 44px;
-    font-size: 0.92rem;
+    padding: 8px 14px 8px 36px;
+    font-size: 0.86rem;
     outline: none;
     background: #ffffff;
     color: var(--ink);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
     transition: box-shadow 0.15s ease;
   }
   .search input:focus {
-    box-shadow: 0 0 0 3px var(--teal);
+    box-shadow: 0 0 0 2px var(--teal);
   }
 
   .cart-open {
@@ -151,15 +196,16 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
     background: var(--teal);
     color: #ffffff;
     border-radius: var(--radius-pill);
-    padding: 10px 16px;
+    padding: 7px 14px;
     font-weight: 800;
-    font-size: 0.88rem;
+    font-size: 0.82rem;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(13, 148, 136, 0.3);
+    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.25);
     transition: background 0.15s ease, transform 0.15s ease;
+    flex: none;
   }
   .cart-open:hover {
     background: var(--teal-dark);
@@ -169,13 +215,11 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
     transform: translateY(0);
   }
   .cart-open svg {
-    width: 19px;
-    height: 19px;
+    width: 17px;
+    height: 17px;
     fill: none;
     stroke: currentColor;
     stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
   }
   .cart-count {
     display: grid;
@@ -183,14 +227,14 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
     background: #ffffff;
     color: var(--teal-dark);
     border-radius: var(--radius-pill);
-    min-width: 22px;
-    height: 22px;
-    padding: 0 6px;
-    font-size: 0.74rem;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    font-size: 0.72rem;
     font-weight: 900;
   }
 
-  /* Compact, clean category bar with smooth scroll */
+  /* Category Navigation Bar */
   .category-nav {
     background: var(--paper);
     border-top: 1px solid rgba(255, 255, 255, 0.08);
@@ -200,127 +244,116 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
     display: flex;
     align-items: center;
     flex-wrap: nowrap;
-    gap: 8px;
-    padding-top: 8px;
-    padding-bottom: 8px;
+    gap: 6px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    overflow-x: auto;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
   }
   .category-scroll::-webkit-scrollbar {
     display: none;
   }
-  .cat-lead {
+
+  .cat-lead-btn {
     flex: none;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
+    background: none;
+    border: 0;
     color: var(--ink-soft);
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     font-weight: 800;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding-right: 6px;
+    letter-spacing: 0.04em;
+    padding: 5px 8px 5px 2px;
     margin-right: 2px;
     border-right: 1px solid var(--line);
+    cursor: pointer;
   }
-  .cat-lead svg {
-    width: 16px;
-    height: 16px;
+  .cat-lead-btn:hover {
+    color: var(--teal-dark);
   }
+  .cat-icon {
+    width: 15px;
+    height: 15px;
+  }
+
   .cat-chip {
-    flex: 0 1 auto;
-    min-width: 0;
-    max-width: 180px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    flex: none;
     white-space: nowrap;
     color: var(--navy);
     text-decoration: none;
     background: #ffffff;
     border: 1px solid var(--line);
     border-radius: var(--radius-pill);
-    padding: 7px 15px;
-    font-size: 0.82rem;
+    padding: 5px 12px;
+    font-size: 0.78rem;
     font-weight: 700;
-    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    cursor: pointer;
   }
   .cat-chip:hover {
     background: var(--teal-soft);
     border-color: var(--teal);
     color: var(--teal-dark);
-    transform: translateY(-1px);
   }
   .cat-chip.active {
     background: var(--teal);
     border-color: var(--teal);
     color: #ffffff;
-    box-shadow: 0 2px 8px rgba(13, 148, 136, 0.25);
+    box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
   }
 
-  .more-cats {
+  .more-cats-wrapper {
     flex: none;
     position: relative;
   }
   .more-toggle {
-    border: 1px solid var(--line);
-    background: #ffffff;
-    color: var(--navy);
-    border-radius: var(--radius-pill);
-    padding: 7px 14px;
-    font-size: 0.82rem;
-    font-weight: 750;
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-  }
-  .more-toggle:hover {
-    background: var(--teal-soft);
-    border-color: var(--teal);
-    color: var(--teal-dark);
+    gap: 5px;
   }
   .chevron-icon {
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
+    transition: transform 0.2s ease;
+  }
+  .more-toggle[aria-expanded="true"] .chevron-icon {
+    transform: rotate(180deg);
   }
 
-  .more-menu-header {
+  /* Desktop Dropdown: Pure positioned popup, NO background overlay to block clicks */
+  .desktop-cats-dropdown {
     display: none;
-  }
-
-  /* Desktop dropdown */
-  .more-menu {
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
-    z-index: 60;
+    z-index: 100;
     background: #ffffff;
-    border-radius: 16px;
+    border-radius: 14px;
     border: 1px solid var(--line);
-    box-shadow: var(--shadow-lift);
-    padding: 8px;
-    min-width: 230px;
+    box-shadow: 0 12px 36px rgba(15, 23, 42, 0.16);
+    padding: 6px;
+    min-width: 220px;
     max-height: 60vh;
     overflow-y: auto;
+  }
+  .desktop-cats-dropdown.open {
+    display: block;
+  }
+  .dropdown-list {
     display: flex;
     flex-direction: column;
     gap: 2px;
   }
-  .more-menu[hidden] {
-    display: none !important;
-  }
-  .more-menu-list {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-  .more-menu a {
+  .dropdown-item {
     color: var(--ink);
     text-decoration: none;
-    padding: 9px 14px;
-    border-radius: 10px;
-    font-size: 0.86rem;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 0.82rem;
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -328,196 +361,305 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
     gap: 8px;
     transition: background 0.15s ease, color 0.15s ease;
   }
-  .more-menu a:hover {
+  .dropdown-item:hover {
     background: var(--teal-soft);
     color: var(--teal-dark);
   }
-  .more-menu a.active {
+  .dropdown-item.active {
     background: var(--teal);
     color: #ffffff;
   }
-  .cat-badge-count {
+  .item-count {
     font-size: 0.72rem;
     background: var(--paper);
     color: var(--ink-soft);
-    padding: 2px 7px;
+    padding: 2px 6px;
     border-radius: var(--radius-pill);
     font-weight: 700;
   }
-  .more-menu a.active .cat-badge-count {
+  .dropdown-item.active .item-count {
     background: rgba(255, 255, 255, 0.25);
     color: #ffffff;
   }
 
-  .cats-modal-overlay {
+  /* Mobile Drawer & Overlay: Hidden on Desktop */
+  .mobile-cats-overlay {
+    display: none;
     position: fixed;
     inset: 0;
-    background: rgba(15, 23, 42, 0.55);
-    backdrop-filter: blur(3px);
-    z-index: 95;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 998;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.2s ease;
+    transition: opacity 0.22s ease;
   }
-  .cats-modal-overlay.open {
+  .mobile-cats-overlay.open {
     opacity: 1;
     pointer-events: auto;
   }
 
+  .mobile-cats-drawer {
+    display: none;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 999;
+    background: #ffffff;
+    border-radius: 20px 20px 0 0;
+    max-height: 80vh;
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.28);
+    transform: translateY(100%);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    flex-direction: column;
+  }
+  .mobile-cats-drawer.open {
+    transform: translateY(0);
+  }
+
+  .drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--line);
+    flex: none;
+  }
+  .drawer-header-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--navy);
+  }
+  .drawer-cat-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--teal);
+  }
+  .drawer-header strong {
+    font-size: 1rem;
+    font-weight: 800;
+  }
+  .drawer-close-btn {
+    border: 0;
+    background: none;
+    font-size: 1.8rem;
+    line-height: 1;
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 0 4px;
+  }
+
+  .drawer-body {
+    padding: 12px 14px 24px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .drawer-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--ink);
+    font-size: 0.9rem;
+    font-weight: 650;
+    background: var(--paper);
+    border: 1px solid transparent;
+    transition: background 0.15s ease;
+  }
+  .drawer-item:active, .drawer-item:hover {
+    background: var(--teal-soft);
+    color: var(--teal-dark);
+  }
+  .drawer-item.active {
+    background: var(--teal);
+    color: #ffffff;
+  }
+  .item-count-badge {
+    margin-left: auto;
+    margin-right: 8px;
+    font-size: 0.72rem;
+    background: #ffffff;
+    color: var(--ink-soft);
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    font-weight: 800;
+  }
+  .drawer-item.active .item-count-badge {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+  }
+  .item-chevron {
+    width: 16px;
+    height: 16px;
+    opacity: 0.5;
+    flex: none;
+  }
+
   @media (max-width: 680px) {
+    .site-header {
+      position: sticky;
+      top: 0;
+    }
     .topbar {
-      height: auto;
+      height: 48px;
       grid-template-columns: auto 1fr auto;
-      gap: 10px;
-      padding-top: 10px;
-      padding-bottom: 10px;
+      gap: 8px;
+      padding-top: 4px;
+      padding-bottom: 4px;
     }
     .brand {
-      width: 116px;
-      height: 38px;
-      padding: 3px 8px;
+      width: 104px;
+      height: 34px;
+      padding: 2px 6px;
     }
-    .search {
-      grid-column: 1 / -1;
-      grid-row: 2;
+    .search input {
+      font-size: 0.8rem;
+      padding: 6px 12px 6px 30px;
+    }
+    .search svg {
+      left: 9px;
+      width: 14px;
+      height: 14px;
     }
     .cart-label {
       display: none;
     }
     .cart-open {
       padding: 0;
-      width: 42px;
-      height: 42px;
+      width: 36px;
+      height: 36px;
       justify-content: center;
       position: relative;
     }
     .cart-open .cart-count {
       position: absolute;
-      top: -4px;
-      right: -4px;
-    }
-    .category-scroll {
-      gap: 6px;
-      padding-top: 8px;
-      padding-bottom: 8px;
-      overflow-x: auto;
-    }
-    .cat-lead {
-      font-size: 0.72rem;
-      padding-right: 4px;
-    }
-    .cat-chip, .more-toggle {
-      padding: 6px 13px;
-      font-size: 0.8rem;
-      flex: none;
-      max-width: none;
-      overflow: visible;
+      top: -3px;
+      right: -3px;
+      min-width: 18px;
+      height: 18px;
+      font-size: 0.68rem;
     }
 
-    /* Fixed Modal Bottom-Sheet on mobile: opens cleanly from ANY position on page */
-    .more-menu {
-      position: fixed !important;
-      left: 0 !important;
-      right: 0 !important;
-      bottom: 0 !important;
-      top: auto !important;
-      width: 100% !important;
-      min-width: 0 !important;
-      max-height: 75vh !important;
-      border-radius: 20px 20px 0 0 !important;
-      z-index: 100 !important;
-      padding: 0 0 env(safe-area-inset-bottom) !important;
-      transform: translateY(100%);
-      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.25) !important;
+    .category-scroll {
+      gap: 5px;
+      padding-top: 4px;
+      padding-bottom: 4px;
     }
-    .more-menu.open {
-      transform: translateY(0);
+    .cat-lead-btn {
+      font-size: 0.72rem;
+      padding: 4px 6px 4px 0;
     }
-    .more-menu-header {
+    .cat-chip {
+      padding: 4px 10px;
+      font-size: 0.75rem;
+    }
+
+    /* On mobile, disable the desktop hover/dropdown and use mobile drawer instead */
+    .desktop-cats-dropdown {
+      display: none !important;
+    }
+    .mobile-cats-overlay {
+      display: block;
+    }
+    .mobile-cats-drawer {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px 20px;
-      border-bottom: 1px solid var(--line);
-    }
-    .more-menu-header strong {
-      font-size: 1.05rem;
-      color: var(--navy);
-    }
-    .more-menu-close {
-      border: 0;
-      background: none;
-      font-size: 1.8rem;
-      line-height: 1;
-      color: var(--ink-soft);
-      cursor: pointer;
-    }
-    .more-menu-list {
-      padding: 12px 16px 20px;
-      overflow-y: auto;
     }
   }
 </style>
 
 <script>
-  const moreWrap = document.querySelector<HTMLElement>('[data-more-cats]');
-  const moreToggle = moreWrap?.querySelector<HTMLButtonElement>('[data-more-toggle]');
-  const moreMenu = moreWrap?.querySelector<HTMLElement>('[data-more-menu]');
-  const moreOverlay = moreWrap?.querySelector<HTMLElement>('[data-more-overlay]');
-  const moreClose = moreWrap?.querySelector<HTMLButtonElement>('[data-more-close]');
+  // Robust Category Menu Controller for both Desktop Dropdown and Mobile Bottom-Sheet
+  function initHeaderCategories() {
+    const isMobile = () => window.innerWidth <= 680;
 
-  const setMore = (open: boolean) => {
-    if (!moreMenu || !moreToggle) return;
-    if (open) {
-      moreMenu.hidden = false;
-      moreMenu.style.display = 'flex';
-      void moreMenu.offsetWidth;
-      moreMenu.classList.add('open');
-      moreOverlay?.removeAttribute('hidden');
-      moreOverlay?.classList.add('open');
-      moreToggle.setAttribute('aria-expanded', 'true');
-      if (window.innerWidth <= 680) {
-        document.body.style.overflow = 'hidden';
+    // Desktop elements
+    const moreWrapper = document.querySelector<HTMLElement>('[data-more-cats-wrapper]');
+    const desktopToggle = moreWrapper?.querySelector<HTMLButtonElement>('[data-more-cats-toggle]');
+    const desktopMenu = moreWrapper?.querySelector<HTMLElement>('[data-desktop-cats-menu]');
+
+    // Mobile elements
+    const mobileOpenBtns = document.querySelectorAll<HTMLElement>('[data-mobile-cats-open]');
+    const mobileDrawer = document.querySelector<HTMLElement>('[data-mobile-cats-drawer]');
+    const mobileOverlay = document.querySelector<HTMLElement>('[data-mobile-cats-overlay]');
+    const mobileCloseBtn = document.querySelector<HTMLButtonElement>('[data-mobile-cats-close]');
+
+    // Toggle Desktop Menu
+    const setDesktopOpen = (open: boolean) => {
+      if (!desktopMenu || !desktopToggle) return;
+      if (open) {
+        desktopMenu.classList.add('open');
+        desktopToggle.setAttribute('aria-expanded', 'true');
+      } else {
+        desktopMenu.classList.remove('open');
+        desktopToggle.setAttribute('aria-expanded', 'false');
       }
-    } else {
-      moreMenu.classList.remove('open');
-      moreOverlay?.classList.remove('open');
-      moreToggle.setAttribute('aria-expanded', 'false');
-      document.body.style.overflow = '';
-      window.setTimeout(() => {
-        if (!moreMenu.classList.contains('open')) {
-          moreMenu.hidden = true;
-          moreMenu.style.display = 'none';
-          moreOverlay?.setAttribute('hidden', '');
-        }
-      }, 200);
-    }
-  };
+    };
 
-  moreToggle?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const isOpen = moreMenu ? moreMenu.classList.contains('open') : false;
-    setMore(!isOpen);
-  });
+    // Toggle Mobile Drawer
+    const setMobileOpen = (open: boolean) => {
+      if (!mobileDrawer || !mobileOverlay) return;
+      if (open) {
+        mobileOverlay.classList.add('open');
+        mobileDrawer.classList.add('open');
+        document.body.style.overflow = 'hidden';
+      } else {
+        mobileDrawer.classList.remove('open');
+        mobileOverlay.classList.remove('open');
+        document.body.style.overflow = '';
+      }
+    };
 
-  moreClose?.addEventListener('click', () => setMore(false));
-  moreOverlay?.addEventListener('click', () => setMore(false));
+    // Toggle click on desktop button:
+    // If on mobile, open mobile drawer; if on desktop, toggle desktop dropdown!
+    desktopToggle?.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (isMobile()) {
+        setMobileOpen(true);
+      } else {
+        const isOpen = desktopMenu?.classList.contains('open') ?? false;
+        setDesktopOpen(!isOpen);
+      }
+    });
 
-  document.addEventListener('click', (e) => {
-    if (moreWrap && e.target instanceof Node && !moreWrap.contains(e.target)) {
-      setMore(false);
-    }
-  });
+    // Mobile open triggers (e.g. clicking "Categorías" button)
+    mobileOpenBtns.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        setMobileOpen(true);
+      });
+    });
 
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') setMore(false);
-  });
+    // Mobile close triggers
+    mobileCloseBtn?.addEventListener('click', () => setMobileOpen(false));
+    mobileOverlay?.addEventListener('click', () => setMobileOpen(false));
 
-  moreMenu?.addEventListener('click', (e) => {
-    if (e.target instanceof Element && e.target.closest('a')) {
-      setMore(false);
-    }
-  });
+    // Global click listener to close desktop dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (moreWrapper && e.target instanceof Node && !moreWrapper.contains(e.target)) {
+        setDesktopOpen(false);
+      }
+    });
+
+    // ESC key closes both
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        setDesktopOpen(false);
+        setMobileOpen(false);
+      }
+    });
+  }
+
+  // Run on load and after client navigation
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHeaderCategories);
+  } else {
+    initHeaderCategories();
+  }
 </script>
-
