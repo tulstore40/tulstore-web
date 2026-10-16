@@ -15,7 +15,7 @@ const jsonLd={"@context":"https://schema.org","@type":"Product",name:product.nom
   <div class="container page-shell">
     <div class="breadcrumbs"><a href="/">Inicio</a><span>›</span><a href={`/categoria/${product.categoriaSlug}`}>{product.categoria}</a><span>›</span><span>{product.nombre}</span></div>
     <section class="product-detail">
-      <div class="photo"><img src={product.imagen} alt={product.nombre} /><span class="badge">Disponible</span></div>
+      <div class="photo"><img src={product.imagen} alt={product.nombre} onerror="this.onerror=null;this.src='/images/tulstore-logo.png';this.style.objectFit='contain';" /><span class="badge">Disponible</span></div>
       <div class="info">
         <span class="category">{product.categoria}</span>
         <h1>{product.nombre}</h1>
