@@ -7,12 +7,16 @@
     "dev": "astro dev",
     "build": "astro check && astro build",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check",
+    "test:e2e": "node tests/e2e/catalog.e2e.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.10",
     "@astrojs/netlify": "^8.2.6",
     "astro": "^7.3.5",
     "typescript": "^6.0.3"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.64.1"
   }
 }

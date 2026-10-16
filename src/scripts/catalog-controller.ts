@@ -41,18 +41,6 @@ const money = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
-function escapeHtml(str: string): string {
-  return (str || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-function escapeAttr(str: string): string {
-  return (str || '').replace(/"/g, '&quot;');
-}
-
 function parseBound(value: string): number {
   const trimmed = value.trim();
   if (!trimmed) return NaN;
@@ -61,72 +49,70 @@ function parseBound(value: string): number {
   return n;
 }
 
-function renderProductCardHtml(p: CatalogJsonProduct): string {
-  const subtitle = [p.ref, p.color].filter(Boolean).join(' · ');
-  const waMsg = `Hola Tulstore, me interesa ${p.name} (${p.ref || p.id}) por ${money(p.price)}.`;
-  const cartPayload = JSON.stringify({
-    id: p.id,
-    slug: p.slug,
-    name: p.name,
-    price: p.price,
-    image: p.img,
-    ref: p.ref,
-  });
+/**
+ * Crea una tarjeta CLONANDO la plantilla que Astro renderiza con ProductCard.astro
+ * (<template data-card-template>) y rellenando solo los datos del producto.
+ *
+ * Por qué: los estilos de ProductCard.astro están encapsulados (data-astro-cid-*). Un HTML
+ * armado a mano con strings no lleva ese atributo y la tarjeta aparece sin estilos (iconos SVG
+ * gigantes, etc.). Al clonar la misma estructura, las tarjetas iniciales y las dinámicas son
+ * idénticas por construcción. Los datos se asignan con textContent/atributos (sin innerHTML).
+ */
+export function createProductCard(tpl: HTMLTemplateElement, p: CatalogJsonProduct): HTMLElement {
+  const proto = tpl.content.firstElementChild;
+  if (!proto) throw new Error('Plantilla de tarjeta vacía (data-card-template).');
+  const item = proto.cloneNode(true) as HTMLElement;
+  item.dataset.id = p.id;
 
-  return `
-    <div class="grid-item" data-id="${p.id}">
-      <article class="product-card">
-        <a class="image-wrap" href="/producto/${p.slug}" aria-label="Ver detalle de ${escapeHtml(p.name)}">
-          <img
-            src="${p.img}"
-            alt="${escapeHtml(p.name)}"
-            loading="lazy"
-            decoding="async"
-            width="360"
-            height="360"
-            onerror="this.onerror=null;this.src='/images/tulstore-logo.png';this.style.objectFit='contain';"
-          />
-        </a>
-        <div class="card-content">
-          <div class="card-meta">
-            ${subtitle ? `<span class="ref-color">${escapeHtml(subtitle)}</span>` : '<span class="ref-color">&nbsp;</span>'}
-            <a class="product-title" href="/producto/${p.slug}" title="${escapeHtml(p.name)}">
-              ${escapeHtml(p.name)}
-            </a>
-          </div>
-          <div class="card-footer">
-            <div class="price-val">${money(p.price)}</div>
-            <div class="action-buttons">
-              <a
-                class="btn-icon-wa"
-                href="https://wa.me/573182022859?text=${encodeURIComponent(waMsg)}"
-                target="_blank"
-                rel="noopener"
-                aria-label="Consultar ${escapeHtml(p.name)} por WhatsApp"
-                title="Consultar por WhatsApp"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
-                  <path d="M12 2.3a9.6 9.6 0 0 0-8.2 14.5L2.3 21.7l4.9-1.3A9.6 9.6 0 1 0 12 2.3zm0 1.8a7.8 7.8 0 0 1 6.6 12 7.8 7.8 0 0 1-9.8 2.4l-.4-.2-2.9.8.8-2.8-.2-.4A7.8 7.8 0 0 1 12 4.1zm-2.9 3.6c-.2 0-.5.1-.7.3-.3.3-.9.9-.9 2.1s.9 2.5 1 2.6c.1.2 1.8 2.8 4.4 3.8 2.2.9 2.6.7 3.1.6.5 0 1.5-.6 1.7-1.2.2-.6.2-1.1.1-1.2l-.6-.3c-.3-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1-.3-.1-1.1-.4-2-1.2-.7-.6-1.2-1.4-1.3-1.6-.1-.2 0-.4.1-.5l.4-.4c.1-.2.2-.3.2-.5l.1-.4c0-.2 0-.3-.1-.4l-.7-1.7c-.2-.4-.4-.4-.6-.4h-.1z"/>
-                </svg>
-              </a>
-              <button
-                type="button"
-                class="btn-add-cart"
-                data-add-cart
-                data-product="${escapeAttr(cartPayload)}"
-                aria-label="Agregar ${escapeHtml(p.name)} al carrito"
-              >
-                <svg class="cart-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>
-                </svg>
-                <span class="btn-text">Agregar</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </article>
-    </div>
-  `;
+  const href = `/producto/${p.slug}`;
+  const subtitle = [p.ref, p.color].filter(Boolean).join(' · ');
+
+  item.querySelectorAll<HTMLAnchorElement>('[data-card-link]').forEach((a) => {
+    a.href = href;
+  });
+  item
+    .querySelector<HTMLAnchorElement>('[data-card-link]:not([data-card-title])')
+    ?.setAttribute('aria-label', `Ver detalle de ${p.name}`);
+
+  const title = item.querySelector<HTMLElement>('[data-card-title]');
+  if (title) {
+    title.textContent = p.name;
+    title.title = p.name;
+  }
+
+  const img = item.querySelector<HTMLImageElement>('[data-card-img]');
+  if (img) {
+    img.alt = p.name;
+    img.src = p.img;
+  }
+
+  const ref = item.querySelector<HTMLElement>('[data-card-ref]');
+  if (ref) ref.textContent = subtitle || '\u00a0';
+
+  const price = item.querySelector<HTMLElement>('[data-card-price]');
+  if (price) price.textContent = money(p.price);
+
+  const wa = item.querySelector<HTMLAnchorElement>('[data-card-wa]');
+  if (wa) {
+    const msg = `Hola Tulstore, me interesa ${p.name} (${p.ref || p.id}) por ${money(p.price)}.`;
+    wa.href = `https://wa.me/573182022859?text=${encodeURIComponent(msg)}`;
+    wa.setAttribute('aria-label', `Consultar ${p.name} por WhatsApp`);
+  }
+
+  const add = item.querySelector<HTMLButtonElement>('[data-card-add]');
+  if (add) {
+    add.dataset.product = JSON.stringify({
+      id: p.id,
+      slug: p.slug,
+      name: p.name,
+      price: p.price,
+      image: p.img,
+      ref: p.ref,
+    });
+    add.setAttribute('aria-label', `Agregar ${p.name} al carrito`);
+  }
+
+  return item;
 }
 
 export function sortProducts(items: CatalogJsonProduct[], key: SortKey): CatalogJsonProduct[] {
@@ -153,6 +139,17 @@ export function initCatalog(root: HTMLElement, config: CatalogControllerConfig):
   const grid = root.querySelector<HTMLElement>('[data-catalog-grid]');
   root.classList.add('js-ready');
   if (!grid) return;
+
+  const cardTemplate = root.querySelector<HTMLTemplateElement>('template[data-card-template]');
+  if (!cardTemplate?.content.firstElementChild) {
+    console.error('Catálogo: falta <template data-card-template>; no se pueden crear más tarjetas.');
+    return;
+  }
+  const buildCards = (items: CatalogJsonProduct[]): DocumentFragment => {
+    const frag = document.createDocumentFragment();
+    for (const p of items) frag.appendChild(createProductCard(cardTemplate, p));
+    return frag;
+  };
 
   // Read the embedded master catalog data
   let allProducts: CatalogJsonProduct[] = [];
@@ -299,7 +296,7 @@ export function initCatalog(root: HTMLElement, config: CatalogControllerConfig):
   // Render current slice into DOM
   const renderFromScratch = () => {
     const slice = filtered.slice(0, cursor);
-    grid.innerHTML = slice.map(renderProductCardHtml).join('');
+    grid.replaceChildren(buildCards(slice));
     updateSeeMoreUi();
   };
 
@@ -309,11 +306,7 @@ export function initCatalog(root: HTMLElement, config: CatalogControllerConfig):
     const nextBatch = filtered.slice(cursor, cursor + batchSize);
     if (!nextBatch.length) return;
 
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = nextBatch.map(renderProductCardHtml).join('');
-    while (tempDiv.firstChild) {
-      grid.appendChild(tempDiv.firstChild);
-    }
+    grid.appendChild(buildCards(nextBatch));
 
     cursor += nextBatch.length;
     updateSeeMoreUi();
@@ -353,11 +346,7 @@ export function initCatalog(root: HTMLElement, config: CatalogControllerConfig):
     const aligned = Math.ceil(currentCount / cols) * cols;
     if (aligned > currentCount && aligned <= filtered.length) {
       const extra = filtered.slice(currentCount, aligned);
-      const tempDiv = document.createElement('div');
-      tempDiv.innerHTML = extra.map(renderProductCardHtml).join('');
-      while (tempDiv.firstChild) {
-        grid.appendChild(tempDiv.firstChild);
-      }
+      grid.appendChild(buildCards(extra));
       cursor = aligned;
       updateSeeMoreUi();
     }
@@ -464,7 +453,7 @@ export function initCatalog(root: HTMLElement, config: CatalogControllerConfig):
     filterAndApply();
   } else {
     // Initial state: SSR already rendered the first 24 cards; just set the "Ver más" remaining counter!
-    cursor = Math.min(getBatchSize(), allProducts.length);
+    cursor = grid.querySelectorAll('.grid-item').length;
     updateSeeMoreUi();
   }
 }

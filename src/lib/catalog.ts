@@ -87,21 +87,43 @@ function mapRow(row: PublicCatalogRow, baseUrl: string): Product {
 export async function getProducts(force = false): Promise<Product[]> {
   if (!force && cache && Date.now() - cache.at < CACHE_MS) return cache.products;
   const { url, key } = env();
-  const endpoint = new URL(`${url}/rest/v1/public_catalog`);
-  endpoint.searchParams.set('select', '*');
-  endpoint.searchParams.set('order', 'producto.asc');
-  const response = await fetch(endpoint, {
-    headers: { apikey: key },
-  });
-  if (!response.ok) {
-    const body = await response.text();
-    throw new Error(`No se pudo leer public_catalog (${response.status}): ${body}`);
+  const PAGE_SIZE = 1000;
+  let offset = 0;
+  const allRows: PublicCatalogRow[] = [];
+
+  while (true) {
+    const endpoint = new URL(`${url}/rest/v1/public_catalog`);
+    endpoint.searchParams.set('select', '*');
+    endpoint.searchParams.set('order', 'producto.asc');
+    endpoint.searchParams.set('limit', String(PAGE_SIZE));
+    endpoint.searchParams.set('offset', String(offset));
+
+    const response = await fetch(endpoint, {
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+      },
+    });
+
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`No se pudo leer public_catalog (${response.status}): ${body}`);
+    }
+
+    const rows = (await response.json()) as PublicCatalogRow[];
+    allRows.push(...rows);
+
+    if (rows.length < PAGE_SIZE) {
+      break;
+    }
+    offset += PAGE_SIZE;
   }
-  const rows = (await response.json()) as PublicCatalogRow[];
-  const products = rows.map((row) => mapRow(row, url));
+
+  const products = allRows.map((row) => mapRow(row, url));
   cache = { at: Date.now(), products };
   return products;
 }
+
 
 export async function getCategories(products?: Product[]): Promise<Category[]> {
   const items = products ?? await getProducts();

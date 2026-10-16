@@ -24,6 +24,23 @@ const dataConfig = JSON.stringify({
 const INITIAL_SSR_COUNT = 24;
 const initialProducts = products.slice(0, INITIAL_SSR_COUNT);
 
+// Tarjeta "molde": se renderiza UNA vez con el mismo componente que las tarjetas SSR y el
+// controlador la clona y rellena. Así las tarjetas dinámicas llevan los mismos atributos
+// data-astro-cid-* (estilos encapsulados) y nunca divergen de ProductCard.astro.
+const templateProduct: Product = {
+  tulstoreId: '',
+  referencia: '',
+  nombre: '',
+  slug: '',
+  color: '',
+  precio: 0,
+  categoria: '',
+  categoriaSlug: '',
+  descripcion: '',
+  imagen: '',
+  estado: 'ACTIVO',
+};
+
 // Ultra-compact JSON payload containing the entire catalog data (~120KB for 1,000 products instead of 6MB of HTML)
 const compactCatalogJson = products.map((p, index) => ({
   id: p.tulstoreId,
@@ -88,7 +105,14 @@ const compactCatalogJson = products.map((p, index) => ({
       ))}
     </div>
 
+    <template data-card-template>
+      <div class="grid-item" data-id="">
+        <ProductCard product={templateProduct} />
+      </div>
+    </template>
+
     <div class="empty-state" data-catalog-empty hidden>
+
       <div class="empty-icon">🔍</div>
       <strong>No encontramos productos</strong>
       <p>Intenta con otra palabra clave o restablece los filtros aplicados.</p>

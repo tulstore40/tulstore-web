@@ -8,3 +8,6 @@ dist/
 
 # Local Netlify folder
 .netlify
+
+# Capturas de las pruebas E2E
+tests/e2e/out/

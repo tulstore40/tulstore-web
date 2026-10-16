@@ -1,5 +1,7 @@
 ---
 import { getCategories } from '../lib/catalog';
+import CategoryExplorer from './CategoryExplorer.astro';
+
 const categories = await getCategories();
 const mainCategories = categories.slice(0, 5);
 const moreCategories = categories.slice(5);
@@ -34,17 +36,32 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
 
   <nav class="category-nav" id="category-nav" aria-label="Navegación por categorías">
     <div class="container category-scroll">
-      <button type="button" class="cat-lead-btn" data-mobile-cats-open aria-label="Ver todas las categorías">
+      <!-- Primary All Categories Button -->
+      <button
+        type="button"
+        class="cat-lead-btn"
+        data-category-modal-open
+        aria-haspopup="dialog"
+        aria-expanded="false"
+        aria-label="Explorar todas las categorías"
+      >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="cat-icon">
-          <path d="M4 6h16M4 12h16M4 18h16"/>
+          <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+          <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+          <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+          <rect x="3" y="14" width="7" height="7" rx="1.5"/>
         </svg>
-        <span>Categorías</span>
+        <span class="cat-lead-text-desktop">Todas las categorías</span>
+        <span class="cat-lead-text-mobile">Categorías</span>
+        <span class="cat-lead-badge">{categories.length}</span>
       </button>
 
+      <!-- Quick access chip: Todos -->
       <a href="/productos" class={todosActive ? 'cat-chip active' : 'cat-chip'} aria-current={todosActive ? 'page' : undefined}>
         Todos
       </a>
 
+      <!-- Quick access main categories -->
       {mainCategories.map((category) => (
         <a
           href={`/categoria/${category.slug}`}
@@ -55,68 +72,31 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
         </a>
       ))}
 
+      <!-- "Más categorías" trigger button -->
       {moreCategories.length > 0 && (
-        <div class="more-cats-wrapper" data-more-cats-wrapper>
-          <button
-            type="button"
-            class="cat-chip more-toggle"
-            data-more-cats-toggle
-            aria-expanded="false"
-            aria-controls="desktop-cats-menu"
-          >
-            <span>Más categorías</span>
-            <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="m6 9 6 6 6-6"/>
-            </svg>
-          </button>
-
-          <!-- Desktop Dropdown -->
-          <div class="desktop-cats-dropdown" id="desktop-cats-menu" data-desktop-cats-menu>
-            <div class="dropdown-arrow"></div>
-            <div class="dropdown-list">
-              {moreCategories.map((category) => (
-                <a
-                  href={`/categoria/${category.slug}`}
-                  class={activeSlug === category.slug ? 'dropdown-item active' : 'dropdown-item'}
-                  aria-current={activeSlug === category.slug ? 'page' : undefined}
-                >
-                  <span class="item-name">{category.name}</span>
-                  <span class="item-count">{category.count}</span>
-                </a>
-              ))}
-            </div>
-          </div>
-        </div>
+        <button
+          type="button"
+          class="cat-chip more-cats-btn"
+          data-category-modal-open
+          aria-haspopup="dialog"
+          aria-expanded="false"
+          aria-label="Ver más categorías"
+        >
+          <span>Más categorías (+{moreCategories.length})</span>
+          <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="m6 9 6 6 6-6"/>
+          </svg>
+        </button>
       )}
     </div>
   </nav>
 
-  <!-- Mobile Bottom-Sheet Modal for Categories -->
-  <div class="mobile-cats-overlay" data-mobile-cats-overlay></div>
-  <div class="mobile-cats-drawer" data-mobile-cats-drawer role="dialog" aria-modal="true" aria-label="Todas las categorías">
-    <div class="drawer-header">
-      <div class="drawer-header-title">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="drawer-cat-icon">
-          <path d="M4 6h16M4 12h16M4 18h16"/>
-        </svg>
-        <strong>Todas las categorías</strong>
-      </div>
-      <button type="button" class="drawer-close-btn" data-mobile-cats-close aria-label="Cerrar menú de categorías">×</button>
-    </div>
-    <div class="drawer-body">
-      <a href="/productos" class={todosActive ? 'drawer-item active' : 'drawer-item'}>
-        <span class="item-name">Todos los productos</span>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="item-chevron"><path d="m9 18 6-6-6-6"/></svg>
-      </a>
-      {categories.map((c) => (
-        <a href={`/categoria/${c.slug}`} class={activeSlug === c.slug ? 'drawer-item active' : 'drawer-item'}>
-          <span class="item-name">{c.name}</span>
-          <span class="item-count-badge">{c.count}</span>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="item-chevron"><path d="m9 18 6-6-6-6"/></svg>
-        </a>
-      ))}
-    </div>
-  </div>
+  <!-- Complete Category Explorer Modal (Desktop Mega-Panel & Mobile Bottom-Sheet) -->
+  <CategoryExplorer
+    categories={categories}
+    activeSlug={activeSlug}
+    todosActive={todosActive}
+  />
 </header>
 
 <style>
@@ -255,31 +235,52 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
     display: none;
   }
 
+  /* Primary Lead Button: "Todas las categorías" */
   .cat-lead-btn {
     flex: none;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    background: none;
-    border: 0;
-    color: var(--ink-soft);
-    font-size: 0.76rem;
+    gap: 7px;
+    background: #ffffff;
+    border: 1.5px solid var(--teal);
+    color: var(--teal-dark);
+    font-size: 0.78rem;
     font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    padding: 5px 8px 5px 2px;
-    margin-right: 2px;
-    border-right: 1px solid var(--line);
+    padding: 5px 12px;
+    border-radius: var(--radius-pill);
     cursor: pointer;
+    box-shadow: 0 1px 4px rgba(13, 148, 136, 0.12);
+    transition: all 0.15s ease;
   }
   .cat-lead-btn:hover {
-    color: var(--teal-dark);
+    background: var(--teal-soft);
+    border-color: var(--teal-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(13, 148, 136, 0.2);
+  }
+  .cat-lead-btn:active {
+    transform: translateY(0);
   }
   .cat-icon {
     width: 15px;
     height: 15px;
+    color: var(--teal);
+  }
+  .cat-lead-badge {
+    background: var(--teal);
+    color: #ffffff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 1px 6px;
+    border-radius: var(--radius-pill);
+    min-width: 18px;
+    text-align: center;
+  }
+  .cat-lead-text-mobile {
+    display: none;
   }
 
+  /* Chips */
   .cat-chip {
     flex: none;
     white-space: nowrap;
@@ -306,200 +307,18 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
     box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
   }
 
-  .more-cats-wrapper {
-    flex: none;
-    position: relative;
-  }
-  .more-toggle {
+  /* "Más categorías" chip button */
+  .more-cats-btn {
     display: inline-flex;
     align-items: center;
     gap: 5px;
+    background: #ffffff;
+    color: var(--ink);
   }
   .chevron-icon {
     width: 12px;
     height: 12px;
-    transition: transform 0.2s ease;
-  }
-  .more-toggle[aria-expanded="true"] .chevron-icon {
-    transform: rotate(180deg);
-  }
-
-  /* Desktop Dropdown: Pure positioned popup, NO background overlay to block clicks */
-  .desktop-cats-dropdown {
-    display: none;
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    z-index: 100;
-    background: #ffffff;
-    border-radius: 14px;
-    border: 1px solid var(--line);
-    box-shadow: 0 12px 36px rgba(15, 23, 42, 0.16);
-    padding: 6px;
-    min-width: 220px;
-    max-height: 60vh;
-    overflow-y: auto;
-  }
-  .desktop-cats-dropdown.open {
-    display: block;
-  }
-  .dropdown-list {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-  .dropdown-item {
-    color: var(--ink);
-    text-decoration: none;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    transition: background 0.15s ease, color 0.15s ease;
-  }
-  .dropdown-item:hover {
-    background: var(--teal-soft);
-    color: var(--teal-dark);
-  }
-  .dropdown-item.active {
-    background: var(--teal);
-    color: #ffffff;
-  }
-  .item-count {
-    font-size: 0.72rem;
-    background: var(--paper);
     color: var(--ink-soft);
-    padding: 2px 6px;
-    border-radius: var(--radius-pill);
-    font-weight: 700;
-  }
-  .dropdown-item.active .item-count {
-    background: rgba(255, 255, 255, 0.25);
-    color: #ffffff;
-  }
-
-  /* Mobile Drawer & Overlay: Hidden on Desktop */
-  .mobile-cats-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(4px);
-    z-index: 998;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.22s ease;
-  }
-  .mobile-cats-overlay.open {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .mobile-cats-drawer {
-    display: none;
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 999;
-    background: #ffffff;
-    border-radius: 20px 20px 0 0;
-    max-height: 80vh;
-    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.28);
-    transform: translateY(100%);
-    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    flex-direction: column;
-  }
-  .mobile-cats-drawer.open {
-    transform: translateY(0);
-  }
-
-  .drawer-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--line);
-    flex: none;
-  }
-  .drawer-header-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--navy);
-  }
-  .drawer-cat-icon {
-    width: 20px;
-    height: 20px;
-    color: var(--teal);
-  }
-  .drawer-header strong {
-    font-size: 1rem;
-    font-weight: 800;
-  }
-  .drawer-close-btn {
-    border: 0;
-    background: none;
-    font-size: 1.8rem;
-    line-height: 1;
-    color: var(--ink-soft);
-    cursor: pointer;
-    padding: 0 4px;
-  }
-
-  .drawer-body {
-    padding: 12px 14px 24px;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-  .drawer-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 14px;
-    border-radius: 12px;
-    text-decoration: none;
-    color: var(--ink);
-    font-size: 0.9rem;
-    font-weight: 650;
-    background: var(--paper);
-    border: 1px solid transparent;
-    transition: background 0.15s ease;
-  }
-  .drawer-item:active, .drawer-item:hover {
-    background: var(--teal-soft);
-    color: var(--teal-dark);
-  }
-  .drawer-item.active {
-    background: var(--teal);
-    color: #ffffff;
-  }
-  .item-count-badge {
-    margin-left: auto;
-    margin-right: 8px;
-    font-size: 0.72rem;
-    background: #ffffff;
-    color: var(--ink-soft);
-    padding: 2px 8px;
-    border-radius: var(--radius-pill);
-    font-weight: 800;
-  }
-  .drawer-item.active .item-count-badge {
-    background: rgba(255, 255, 255, 0.25);
-    color: #ffffff;
-  }
-  .item-chevron {
-    width: 16px;
-    height: 16px;
-    opacity: 0.5;
-    flex: none;
   }
 
   @media (max-width: 680px) {
@@ -553,113 +372,19 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
       padding-bottom: 4px;
     }
     .cat-lead-btn {
-      font-size: 0.72rem;
-      padding: 4px 6px 4px 0;
+      padding: 4px 8px;
+      font-size: 0.74rem;
+      gap: 5px;
+    }
+    .cat-lead-text-desktop {
+      display: none;
+    }
+    .cat-lead-text-mobile {
+      display: inline;
     }
     .cat-chip {
       padding: 4px 10px;
       font-size: 0.75rem;
     }
-
-    /* On mobile, disable the desktop hover/dropdown and use mobile drawer instead */
-    .desktop-cats-dropdown {
-      display: none !important;
-    }
-    .mobile-cats-overlay {
-      display: block;
-    }
-    .mobile-cats-drawer {
-      display: flex;
-    }
   }
 </style>
-
-<script>
-  // Robust Category Menu Controller for both Desktop Dropdown and Mobile Bottom-Sheet
-  function initHeaderCategories() {
-    const isMobile = () => window.innerWidth <= 680;
-
-    // Desktop elements
-    const moreWrapper = document.querySelector<HTMLElement>('[data-more-cats-wrapper]');
-    const desktopToggle = moreWrapper?.querySelector<HTMLButtonElement>('[data-more-cats-toggle]');
-    const desktopMenu = moreWrapper?.querySelector<HTMLElement>('[data-desktop-cats-menu]');
-
-    // Mobile elements
-    const mobileOpenBtns = document.querySelectorAll<HTMLElement>('[data-mobile-cats-open]');
-    const mobileDrawer = document.querySelector<HTMLElement>('[data-mobile-cats-drawer]');
-    const mobileOverlay = document.querySelector<HTMLElement>('[data-mobile-cats-overlay]');
-    const mobileCloseBtn = document.querySelector<HTMLButtonElement>('[data-mobile-cats-close]');
-
-    // Toggle Desktop Menu
-    const setDesktopOpen = (open: boolean) => {
-      if (!desktopMenu || !desktopToggle) return;
-      if (open) {
-        desktopMenu.classList.add('open');
-        desktopToggle.setAttribute('aria-expanded', 'true');
-      } else {
-        desktopMenu.classList.remove('open');
-        desktopToggle.setAttribute('aria-expanded', 'false');
-      }
-    };
-
-    // Toggle Mobile Drawer
-    const setMobileOpen = (open: boolean) => {
-      if (!mobileDrawer || !mobileOverlay) return;
-      if (open) {
-        mobileOverlay.classList.add('open');
-        mobileDrawer.classList.add('open');
-        document.body.style.overflow = 'hidden';
-      } else {
-        mobileDrawer.classList.remove('open');
-        mobileOverlay.classList.remove('open');
-        document.body.style.overflow = '';
-      }
-    };
-
-    // Toggle click on desktop button:
-    // If on mobile, open mobile drawer; if on desktop, toggle desktop dropdown!
-    desktopToggle?.addEventListener('click', (e) => {
-      e.stopPropagation();
-      if (isMobile()) {
-        setMobileOpen(true);
-      } else {
-        const isOpen = desktopMenu?.classList.contains('open') ?? false;
-        setDesktopOpen(!isOpen);
-      }
-    });
-
-    // Mobile open triggers (e.g. clicking "Categorías" button)
-    mobileOpenBtns.forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        setMobileOpen(true);
-      });
-    });
-
-    // Mobile close triggers
-    mobileCloseBtn?.addEventListener('click', () => setMobileOpen(false));
-    mobileOverlay?.addEventListener('click', () => setMobileOpen(false));
-
-    // Global click listener to close desktop dropdown when clicking outside
-    document.addEventListener('click', (e) => {
-      if (moreWrapper && e.target instanceof Node && !moreWrapper.contains(e.target)) {
-        setDesktopOpen(false);
-      }
-    });
-
-    // ESC key closes both
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        setDesktopOpen(false);
-        setMobileOpen(false);
-      }
-    });
-  }
-
-  // Run on load and after client navigation
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initHeaderCategories);
-  } else {
-    initHeaderCategories();
-  }
-</script>

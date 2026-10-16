@@ -4,9 +4,17 @@ import { formatCOP } from '../lib/format';
 const { product } = Astro.props as { product: Product };
 const subtitle = [product.referencia, product.color].filter(Boolean).join(' · ');
 ---
-<article class="product-card">
-  <a class="image-wrap" href={`/producto/${product.slug}`} aria-label={`Ver detalle de ${product.nombre}`}>
+<!--
+  Única fuente de verdad de la estructura de la tarjeta.
+  Los atributos data-card-* son el contrato con src/scripts/catalog-controller.ts:
+  las tarjetas insertadas por "Ver más", búsqueda o filtros se crean CLONANDO esta misma
+  estructura (renderizada una vez en un <template>), de modo que conservan los atributos
+  data-astro-cid-* que activan los estilos encapsulados de abajo.
+-->
+<article class="product-card" data-card>
+  <a class="image-wrap" data-card-link href={`/producto/${product.slug}`} aria-label={`Ver detalle de ${product.nombre}`}>
     <img
+      data-card-img
       src={product.imagen}
       alt={product.nombre}
       loading="lazy"
@@ -18,16 +26,17 @@ const subtitle = [product.referencia, product.color].filter(Boolean).join(' · '
   </a>
   <div class="card-content">
     <div class="card-meta">
-      {subtitle ? <span class="ref-color">{subtitle}</span> : <span class="ref-color">&nbsp;</span>}
-      <a class="product-title" href={`/producto/${product.slug}`} title={product.nombre}>
+      <span class="ref-color" data-card-ref>{subtitle || '\u00a0'}</span>
+      <a class="product-title" data-card-link data-card-title href={`/producto/${product.slug}`} title={product.nombre}>
         {product.nombre}
       </a>
     </div>
     <div class="card-footer">
-      <div class="price-val">{formatCOP(product.precio)}</div>
+      <div class="price-val" data-card-price>{formatCOP(product.precio)}</div>
       <div class="action-buttons">
         <a
           class="btn-icon-wa"
+          data-card-wa
           href={`https://wa.me/573182022859?text=${encodeURIComponent(`Hola Tulstore, me interesa ${product.nombre} (${product.referencia || product.tulstoreId}) por ${formatCOP(product.precio)}.`)}`}
           target="_blank"
           rel="noopener"
@@ -42,6 +51,7 @@ const subtitle = [product.referencia, product.color].filter(Boolean).join(' · '
           type="button"
           class="btn-add-cart"
           data-add-cart
+          data-card-add
           data-product={JSON.stringify({
             id: product.tulstoreId,
             slug: product.slug,
@@ -117,6 +127,7 @@ const subtitle = [product.referencia, product.color].filter(Boolean).join(' · '
     flex-direction: column;
     gap: 2px;
     flex: 1;
+    min-width: 0;
   }
 
   .ref-color {
@@ -140,8 +151,10 @@ const subtitle = [product.referencia, product.color].filter(Boolean).join(' · '
     color: var(--ink);
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
+    overflow-wrap: anywhere;
     height: 2.5em;
     transition: color 0.15s ease;
   }
@@ -155,6 +168,7 @@ const subtitle = [product.referencia, product.color].filter(Boolean).join(' · '
     flex-direction: column;
     gap: 7px;
     padding-top: 2px;
+    min-width: 0;
   }
 
   .price-val {
@@ -163,12 +177,14 @@ const subtitle = [product.referencia, product.color].filter(Boolean).join(' · '
     color: var(--navy);
     letter-spacing: -0.02em;
     line-height: 1.1;
+    white-space: nowrap;
   }
 
   .action-buttons {
     display: flex;
     gap: 5px;
     align-items: center;
+    min-width: 0;
   }
 
   .btn-add-cart {
@@ -237,16 +253,22 @@ const subtitle = [product.referencia, product.color].filter(Boolean).join(' · '
     height: 17px;
   }
 
-  @media (max-width: 480px) {
-    .image-wrap { padding: 6px; }
-    .card-content { padding: 7px 8px 8px; gap: 4px; }
-    .ref-color { font-size: 0.65rem; }
-    .product-title { font-size: 0.76rem; height: 2.5em; }
-    .price-val { font-size: 0.98rem; }
-    .btn-add-cart, .btn-icon-wa { height: 31px; }
-    .btn-icon-wa { width: 31px; }
-    .btn-icon-wa svg { width: 15px; height: 15px; }
-    .btn-add-cart { font-size: 0.75rem; padding: 0 6px; }
-    .btn-add-cart .cart-icon { width: 13px; height: 13px; }
+  /* Teléfonos: tarjeta compacta pensada para 3-4 columnas.
+     Se oculta la referencia (sigue en el detalle), el botón Agregar queda solo con icono
+     y WhatsApp pasa a ser un acceso secundario pequeño. Áreas táctiles >= 30px. */
+  @media (max-width: 599px) {
+    .product-card { border-radius: 10px; }
+    .image-wrap { padding: 4px; }
+    .card-content { padding: 5px 6px 6px; gap: 3px; }
+    .ref-color { display: none; }
+    .product-title { font-size: 0.7rem; line-height: 1.22; height: 2.44em; font-weight: 650; }
+    .card-footer { gap: 4px; padding-top: 0; }
+    .price-val { font-size: 0.84rem; letter-spacing: -0.03em; }
+    .action-buttons { gap: 4px; }
+    .btn-add-cart { height: 30px; padding: 0; border-radius: 7px; }
+    .btn-add-cart .btn-text { display: none; }
+    .btn-add-cart .cart-icon { width: 16px; height: 16px; }
+    .btn-icon-wa { width: 30px; height: 30px; border-radius: 7px; }
+    .btn-icon-wa svg { width: 14px; height: 14px; }
   }
 </style>

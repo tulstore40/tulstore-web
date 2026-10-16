@@ -1,0 +1,918 @@
+---
+import type { Category } from '../lib/catalog';
+
+interface Props {
+  categories: Category[];
+  activeSlug: string | null;
+  todosActive: boolean;
+  totalProducts?: number;
+}
+
+const {
+  categories,
+  activeSlug,
+  todosActive,
+  totalProducts = categories.reduce((sum, c) => sum + c.count, 0),
+} = Astro.props;
+
+// Category icon helper to provide distinct, modern SVG icons
+function getCategoryIcon(slug: string): string {
+  switch (slug) {
+    case 'juguetes-y-recreacion':
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="6"/><path d="M6 12h4m-2-2v4m10-2h.01m-3 0h.01"/></svg>`;
+    case 'tecnologia-y-electronica':
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="12" x="3" y="4" rx="2"/><path d="M2 18h20m-12 0v2m4-2v2"/></svg>`;
+    case 'cocina-y-comedor':
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2v20M21 2v6a3 3 0 0 1-3 3M18 5h3M6 2v20M3 2v6a3 3 0 0 0 6 0V2"/></svg>`;
+    case 'hogar-y-organizacion':
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>` ;
+    case 'deporte-fitness-y-outdoor':
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m4.93 4.93 4.24 4.24m5.66 5.66 4.24 4.24M14.83 9.17l-5.66 5.66m9.9 4.24-4.24-4.24M9.17 4.93l-4.24 4.24"/></svg>`;
+    case 'salud-y-bienestar':
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>`;
+    case 'belleza-y-cuidado-personal':
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>`;
+    case 'automotriz-y-motos':
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9C2.1 11.2 2 11.6 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>`;
+    case 'mascotas':
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="4" r="2"/><circle cx="18" cy="8" r="2"/><circle cx="20" cy="16" r="2"/><path d="M9 10a5 5 0 0 1 5 5v3.5a3.5 3.5 0 0 1-6.8 1.2L6.1 16.2A5 5 0 0 1 9 10z"/></svg>`;
+    case 'escolar-arte-y-papeleria':
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10m-10 4h10"/></svg>`;
+    case 'bebes-y-maternidad':
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h.01M15 12h.01M10 16c.5.5 1.2.8 2 .8s1.5-.3 2-.8M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>`;
+    case 'herramientas-y-ferreteria':
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>`;
+    case 'navidad-y-temporada':
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="14" rx="2"/><path d="M12 8v14M3 13h18M7.5 8a2.5 2.5 0 0 1 0-5A4.8 4.8 0 0 1 12 8a4.8 4.8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/></svg>`;
+    case 'fiestas-y-eventos':
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.8 11.3 2 22l10.7-3.79M4 3h.01M22 8h.01M15 2h.01M22 20h.01M21 13a7 7 0 0 0-7-7c-4 0-7 3-7 7 0 4.2 3.5 7 7 7 .9 0 1.8-.2 2.6-.5"/></svg>`;
+    default:
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>`;
+  }
+}
+---
+
+<!-- Category Explorer Overlay & Dialog -->
+<div class="cat-modal-backdrop" id="cat-modal-backdrop" data-cat-backdrop aria-hidden="true"></div>
+
+<div
+  class="cat-modal-wrapper"
+  id="cat-modal"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="cat-modal-title"
+  aria-hidden="true"
+>
+  <div class="cat-modal-card">
+    <!-- Header with Title, Badge, Search & Close -->
+    <header class="cat-modal-header">
+      <div class="cat-modal-title-row">
+        <div class="cat-modal-title-left">
+          <div class="cat-title-icon-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="cat-title-icon">
+              <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+              <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+              <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+              <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+            </svg>
+          </div>
+          <div>
+            <h2 id="cat-modal-title" class="cat-modal-heading">Explorar Categorías</h2>
+            <p class="cat-modal-subheading">
+              <span class="cat-count-pill">{categories.length} categorías</span>
+              <span class="dot-separator">•</span>
+              <span class="prod-total-pill">{totalProducts.toLocaleString('es-CO')} productos</span>
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          class="cat-modal-close"
+          data-cat-close
+          aria-label="Cerrar ventana de categorías (Esc)"
+          title="Cerrar (Esc)"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="close-icon">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Real-time Category Search Input -->
+      <div class="cat-search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="search-icon">
+          <circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>
+        </svg>
+        <input
+          type="search"
+          id="cat-filter-input"
+          class="cat-search-input"
+          placeholder="Buscar una categoría..."
+          autocomplete="off"
+          spellcheck="false"
+          aria-label="Filtrar categorías"
+        />
+        <button type="button" class="cat-search-clear" id="cat-search-clear" aria-label="Limpiar búsqueda" style="display: none;">
+          ×
+        </button>
+      </div>
+    </header>
+
+    <!-- Body / Scrollable Content -->
+    <div class="cat-modal-body" id="cat-modal-body">
+      <!-- Quick "Todos los productos" banner -->
+      <div class="cat-all-banner" data-cat-item data-cat-name="todos los productos catalogo completo">
+        <a
+          href="/productos"
+          class={`cat-all-link ${todosActive ? 'is-active' : ''}`}
+          aria-current={todosActive ? 'page' : undefined}
+        >
+          <div class="cat-all-left">
+            <div class="cat-icon-container">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+                <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+                <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+                <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+              </svg>
+            </div>
+            <div>
+              <span class="cat-all-title">Todos los productos</span>
+              <span class="cat-all-desc">Catálogo completo de Tulstore</span>
+            </div>
+          </div>
+          <div class="cat-all-right">
+            <span class="cat-badge">{totalProducts.toLocaleString('es-CO')} productos</span>
+            {todosActive && <span class="active-tag">Activo</span>}
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="arrow-icon">
+              <path d="m9 18 6-6-6-6"/>
+            </svg>
+          </div>
+        </a>
+      </div>
+
+      <!-- Categories Grid (Desktop 3-col / Mobile 1-col) -->
+      <div class="cat-grid" id="cat-grid" role="list">
+        {categories.map((c) => {
+          const isActive = activeSlug === c.slug;
+          return (
+            <div
+              class="cat-card-wrapper"
+              role="listitem"
+              data-cat-item
+              data-cat-name={c.name.toLowerCase()}
+              data-cat-slug={c.slug}
+            >
+              <a
+                href={`/categoria/${c.slug}`}
+                class={`cat-card ${isActive ? 'is-active' : ''}`}
+                aria-current={isActive ? 'page' : undefined}
+              >
+                <div class="cat-card-left">
+                  <div class="cat-icon-container" set:html={getCategoryIcon(c.slug)} />
+                  <span class="cat-name">{c.name}</span>
+                </div>
+                <div class="cat-card-right">
+                  <span class="cat-badge">{c.count}</span>
+                  {isActive && <span class="active-tag">Activa</span>}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="arrow-icon">
+                    <path d="m9 18 6-6-6-6"/>
+                  </svg>
+                </div>
+              </a>
+            </div>
+          );
+        })}
+      </div>
+
+      <!-- Empty state when search yields no matches -->
+      <div class="cat-empty-state" id="cat-empty-state" style="display: none;">
+        <div class="cat-empty-icon">🔍</div>
+        <p class="cat-empty-title">No encontramos categorías que coincidan</p>
+        <p class="cat-empty-desc">Intenta escribir de otra forma o explora todo el catálogo.</p>
+        <button type="button" class="cat-empty-btn" id="cat-empty-reset">
+          Ver todas las categorías
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* -------------------------------------------------------------
+     Backdrop and Dialog Overlay (Top-level Fixed, Above All)
+  ------------------------------------------------------------- */
+  .cat-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 998;
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease-out;
+  }
+  .cat-modal-backdrop.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .cat-modal-wrapper {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    pointer-events: none;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s ease-out, visibility 0.2s ease-out;
+  }
+  .cat-modal-wrapper.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  /* -------------------------------------------------------------
+     Desktop Card Layout (Centered, Expansive, Elegant)
+  ------------------------------------------------------------- */
+  .cat-modal-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 960px;
+    max-height: 85vh;
+    border-radius: 20px;
+    box-shadow: 0 25px 60px -12px rgba(15, 23, 42, 0.35), 0 0 0 1px rgba(15, 23, 42, 0.08);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: scale(0.96) translateY(8px);
+    transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .cat-modal-wrapper.is-open .cat-modal-card {
+    transform: scale(1) translateY(0);
+  }
+
+  /* -------------------------------------------------------------
+     Header Section
+  ------------------------------------------------------------- */
+  .cat-modal-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--line);
+    background: #ffffff;
+    flex: none;
+  }
+  .cat-modal-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+  }
+  .cat-modal-title-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .cat-title-icon-box {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: var(--teal-soft);
+    color: var(--teal-dark);
+    display: grid;
+    place-items: center;
+    flex: none;
+  }
+  .cat-title-icon {
+    width: 22px;
+    height: 22px;
+  }
+  .cat-modal-heading {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--navy);
+    line-height: 1.2;
+    margin: 0;
+  }
+  .cat-modal-subheading {
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    margin: 3px 0 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cat-count-pill {
+    font-weight: 700;
+    color: var(--teal-dark);
+  }
+  .prod-total-pill {
+    font-weight: 600;
+  }
+  .dot-separator {
+    opacity: 0.4;
+  }
+
+  .cat-modal-close {
+    width: 38px;
+    height: 38px;
+    border: 0;
+    background: var(--paper);
+    color: var(--ink-soft);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+    flex: none;
+  }
+  .cat-modal-close:hover {
+    background: #e2e8f0;
+    color: var(--ink);
+    transform: rotate(90deg);
+  }
+  .close-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* -------------------------------------------------------------
+     Search Input
+  ------------------------------------------------------------- */
+  .cat-search-box {
+    position: relative;
+    width: 100%;
+  }
+  .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    color: var(--ink-muted);
+    pointer-events: none;
+  }
+  .cat-search-input {
+    width: 100%;
+    padding: 10px 40px 10px 42px;
+    border: 1.5px solid var(--line);
+    border-radius: 12px;
+    font-size: 0.92rem;
+    background: var(--paper);
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+  }
+  .cat-search-input:focus {
+    background: #ffffff;
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+  }
+  .cat-search-clear {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 0;
+    background: #cbd5e1;
+    color: #475569;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+  }
+  .cat-search-clear:hover {
+    background: #94a3b8;
+    color: #0f172a;
+  }
+
+  /* -------------------------------------------------------------
+     Body / Content Scrolling
+  ------------------------------------------------------------- */
+  .cat-modal-body {
+    padding: 20px 24px 28px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    flex: 1;
+    max-height: calc(85vh - 150px);
+  }
+
+  /* -------------------------------------------------------------
+     All Products Banner
+  ------------------------------------------------------------- */
+  .cat-all-banner {
+    margin-bottom: 16px;
+  }
+  .cat-all-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: linear-gradient(135deg, rgba(13, 148, 136, 0.08) 0%, rgba(23, 37, 66, 0.05) 100%);
+    border: 1.5px solid rgba(13, 148, 136, 0.22);
+    border-radius: 14px;
+    text-decoration: none;
+    color: var(--navy);
+    transition: all 0.18s ease;
+  }
+  .cat-all-link:hover {
+    background: linear-gradient(135deg, rgba(13, 148, 136, 0.14) 0%, rgba(23, 37, 66, 0.09) 100%);
+    border-color: var(--teal);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.15);
+  }
+  .cat-all-link.is-active {
+    background: var(--navy);
+    color: #ffffff;
+    border-color: var(--navy);
+  }
+  .cat-all-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .cat-all-left .cat-icon-container {
+    background: var(--teal);
+    color: #ffffff;
+  }
+  .cat-all-title {
+    display: block;
+    font-size: 1rem;
+    font-weight: 800;
+  }
+  .cat-all-desc {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    margin-top: 1px;
+  }
+  .cat-all-link.is-active .cat-all-desc {
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .cat-all-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  /* -------------------------------------------------------------
+     Categories Grid (3 Columns on Desktop)
+  ------------------------------------------------------------- */
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .cat-card-wrapper {
+    min-width: 0;
+  }
+
+  .cat-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--ink);
+    transition: all 0.18s ease;
+    height: 100%;
+  }
+  .cat-card:hover {
+    background: #ffffff;
+    border-color: var(--teal);
+    transform: translateY(-1.5px);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  }
+  .cat-card:hover .cat-name {
+    color: var(--teal-dark);
+  }
+  .cat-card:hover .arrow-icon {
+    transform: translateX(3px);
+    color: var(--teal);
+  }
+
+  /* Active Category State */
+  .cat-card.is-active {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(13, 148, 136, 0.3);
+  }
+  .cat-card.is-active .cat-name {
+    color: #ffffff;
+  }
+  .cat-card.is-active .cat-badge {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+  }
+  .cat-card.is-active .cat-icon-container {
+    background: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+  }
+  .cat-card.is-active .arrow-icon {
+    color: #ffffff;
+  }
+
+  .cat-card-left {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+    flex: 1;
+  }
+  .cat-icon-container {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+    background: #ffffff;
+    color: var(--teal);
+    display: grid;
+    place-items: center;
+    flex: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: background 0.18s ease, color 0.18s ease;
+  }
+  .cat-icon-container :global(svg) {
+    width: 18px;
+    height: 18px;
+  }
+  .cat-card:hover .cat-icon-container {
+    background: var(--teal-soft);
+    color: var(--teal-dark);
+  }
+
+  .cat-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    transition: color 0.15s ease;
+  }
+
+  .cat-card-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: none;
+  }
+  .cat-badge {
+    font-size: 0.72rem;
+    font-weight: 800;
+    background: #ffffff;
+    color: var(--ink-soft);
+    padding: 3px 8px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--line);
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .active-tag {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: #ffffff;
+    color: var(--teal-dark);
+    padding: 2px 6px;
+    border-radius: 6px;
+  }
+  .arrow-icon {
+    width: 14px;
+    height: 14px;
+    color: var(--ink-muted);
+    transition: transform 0.15s ease, color 0.15s ease;
+  }
+
+  /* -------------------------------------------------------------
+     Empty State
+  ------------------------------------------------------------- */
+  .cat-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .cat-empty-icon {
+    font-size: 2.2rem;
+    margin-bottom: 8px;
+  }
+  .cat-empty-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--navy);
+    margin: 0;
+  }
+  .cat-empty-desc {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    margin: 4px 0 16px;
+  }
+  .cat-empty-btn {
+    border: 0;
+    background: var(--teal);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.84rem;
+    padding: 8px 18px;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+  .cat-empty-btn:hover {
+    background: var(--teal-dark);
+  }
+
+  /* -------------------------------------------------------------
+     Responsive Breakpoints
+  ------------------------------------------------------------- */
+  @media (max-width: 900px) {
+    .cat-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  /* Móvil: hoja inferior compacta.
+     - Altura máx. 75dvh (y nunca mayor al viewport visible cuando aparece el teclado: --vv-h).
+     - Cabecera (título + buscador) fija; solo la lista hace scroll interno.
+     - Filas de texto sin iconos; input a 16px para que iOS no haga zoom al enfocar. */
+  @media (max-width: 680px) {
+    .cat-modal-wrapper {
+      padding: 0;
+      align-items: flex-end;
+      inset: auto 0 auto 0;
+      top: var(--vv-top, 0px);
+      height: var(--vv-h, 100dvh);
+    }
+    .cat-modal-card {
+      max-width: 100%;
+      max-height: min(75dvh, calc(var(--vv-h, 100dvh) - 12px));
+      border-radius: 16px 16px 0 0;
+      box-shadow: 0 -10px 32px rgba(15, 23, 42, 0.32);
+      transform: translateY(100%);
+      transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .cat-modal-wrapper.is-open .cat-modal-card {
+      transform: translateY(0);
+    }
+
+    .cat-modal-header {
+      padding: 12px 12px 8px;
+      position: relative;
+    }
+    .cat-modal-header::before {
+      content: '';
+      position: absolute;
+      top: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 32px;
+      height: 4px;
+      border-radius: 2px;
+      background: #cbd5e1;
+    }
+    .cat-modal-title-row {
+      margin: 4px 0 8px;
+      gap: 8px;
+    }
+    .cat-title-icon-box { display: none; }
+    .cat-modal-heading { font-size: 1rem; }
+    .cat-modal-subheading { font-size: 0.72rem; margin-top: 1px; }
+    .cat-modal-close {
+      width: 36px;
+      height: 36px;
+      background: #e2e8f0;
+      color: var(--navy);
+    }
+    .cat-modal-close:hover { transform: none; }
+    .close-icon { width: 18px; height: 18px; }
+
+    .cat-search-input {
+      font-size: 16px;
+      padding: 8px 34px 8px 34px;
+      border-radius: 10px;
+    }
+    .search-icon { left: 11px; width: 16px; height: 16px; }
+
+    .cat-modal-body {
+      padding: 4px 8px calc(10px + env(safe-area-inset-bottom, 0px));
+      max-height: none;
+      min-height: 0;
+      flex: 1 1 auto;
+      overscroll-behavior: contain;
+    }
+
+    .cat-all-banner { margin-bottom: 2px; }
+    .cat-all-link {
+      padding: 9px 10px;
+      border-radius: 8px;
+      border-width: 1px;
+      background: var(--teal-soft);
+    }
+    .cat-all-desc { display: none; }
+    .cat-all-title { font-size: 0.9rem; }
+    .cat-all-left { gap: 0; }
+
+    .cat-grid { grid-template-columns: 1fr; gap: 0; }
+    .cat-card {
+      padding: 0 10px;
+      min-height: 42px;
+      border: 0;
+      border-bottom: 1px solid #f1f5f9;
+      border-radius: 0;
+      background: transparent;
+    }
+    .cat-card:hover { transform: none; box-shadow: none; background: var(--teal-soft); }
+    .cat-card.is-active { border-radius: 8px; border-bottom-color: transparent; }
+    .cat-icon-container { display: none; }
+    .cat-card-left { gap: 0; }
+    .cat-name { font-size: 0.9rem; font-weight: 650; -webkit-line-clamp: 1; line-clamp: 1; }
+    .cat-badge { font-size: 0.7rem; padding: 1px 7px; }
+    .active-tag { display: none; }
+    .cat-empty-state { padding: 24px 12px; }
+  }
+</style>
+
+<script>
+  // Robust, Leak-Free Category Explorer Modal Controller
+  function initCategoryExplorer() {
+    const backdrop = document.getElementById('cat-modal-backdrop');
+    const modal = document.getElementById('cat-modal');
+    const closeBtn = modal?.querySelector<HTMLButtonElement>('[data-cat-close]');
+    const searchInput = document.getElementById('cat-filter-input') as HTMLInputElement | null;
+    const searchClear = document.getElementById('cat-search-clear') as HTMLButtonElement | null;
+    const catItems = modal?.querySelectorAll<HTMLElement>('[data-cat-item]');
+    const emptyState = document.getElementById('cat-empty-state');
+    const emptyReset = document.getElementById('cat-empty-reset');
+
+    if (!backdrop || !modal) return;
+    // Evita registrar listeners duplicados si el script se ejecuta más de una vez.
+    if (modal.dataset.ready === 'true') return;
+    modal.dataset.ready = 'true';
+
+    let isOpen = false;
+
+    // Con el teclado móvil abierto, la hoja se ajusta al viewport VISIBLE.
+    const vv = window.visualViewport;
+    const syncViewport = () => {
+      if (!vv) return;
+      modal.style.setProperty('--vv-h', vv.height + 'px');
+      modal.style.setProperty('--vv-top', vv.offsetTop + 'px');
+    };
+    const clearViewport = () => {
+      modal.style.removeProperty('--vv-h');
+      modal.style.removeProperty('--vv-top');
+    };
+    vv?.addEventListener('resize', () => isOpen && syncViewport());
+    vv?.addEventListener('scroll', () => isOpen && syncViewport());
+
+    const openModal = () => {
+      if (isOpen) return;
+      isOpen = true;
+      backdrop.classList.add('is-open');
+      modal.classList.add('is-open');
+      backdrop.setAttribute('aria-hidden', 'false');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      syncViewport();
+
+      // Update triggers
+      document.querySelectorAll<HTMLElement>('[data-category-modal-open]').forEach((btn) => {
+        btn.setAttribute('aria-expanded', 'true');
+      });
+
+      // Focus search after transition
+      if (window.matchMedia('(min-width: 681px)').matches) {
+        setTimeout(() => searchInput?.focus(), 100);
+      }
+    };
+
+    const closeModal = () => {
+      if (!isOpen) return;
+      isOpen = false;
+      modal.classList.remove('is-open');
+      backdrop.classList.remove('is-open');
+      backdrop.setAttribute('aria-hidden', 'true');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      clearViewport();
+
+      // Update triggers
+      document.querySelectorAll<HTMLElement>('[data-category-modal-open]').forEach((btn) => {
+        btn.setAttribute('aria-expanded', 'false');
+      });
+
+      // Clear search filter
+      if (searchInput && searchInput.value) {
+        searchInput.value = '';
+        filterCategories('');
+      }
+    };
+
+    // Filter categories function
+    const filterCategories = (query: string) => {
+      const q = query.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (searchClear) {
+        searchClear.style.display = q ? 'grid' : 'none';
+      }
+
+      let visibleCount = 0;
+      catItems?.forEach((item) => {
+        const name = (item.getAttribute('data-cat-name') || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        if (!q || name.includes(q)) {
+          item.style.display = '';
+          visibleCount++;
+        } else {
+          item.style.display = 'none';
+        }
+      });
+
+      if (emptyState) {
+        emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+      }
+    };
+
+    // Global trigger delegation: any element with [data-category-modal-open]
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement | null;
+      const trigger = target?.closest('[data-category-modal-open]');
+      if (trigger) {
+        e.preventDefault();
+        e.stopPropagation();
+        openModal();
+      }
+    });
+
+    // Close triggers
+    closeBtn?.addEventListener('click', closeModal);
+    backdrop.addEventListener('click', closeModal);
+
+    // Close on clicking outside the card when wrapper is clicked directly
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
+
+    // Search input listener
+    searchInput?.addEventListener('input', () => {
+      filterCategories(searchInput.value);
+    });
+
+    // Clear search
+    searchClear?.addEventListener('click', () => {
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+        filterCategories('');
+      }
+    });
+
+    emptyReset?.addEventListener('click', () => {
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+        filterCategories('');
+      }
+    });
+
+    // ESC key listener
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isOpen) {
+        closeModal();
+      }
+    });
+
+    // Close before navigating when clicking any category link
+    modal.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => {
+        closeModal();
+      });
+    });
+  }
+
+  // Initialize on both DOMContentLoaded and Astro page loads
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCategoryExplorer);
+  } else {
+    initCategoryExplorer();
+  }
+  document.addEventListener('astro:page-load', initCategoryExplorer);
+</script>
