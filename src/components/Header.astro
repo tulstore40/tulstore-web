@@ -3,13 +3,14 @@ import { getCategories } from '../lib/catalog';
 import CategoryExplorer from './CategoryExplorer.astro';
 
 const categories = await getCategories();
-const mainCategories = categories.slice(0, 5);
-const moreCategories = categories.slice(5);
 
 const pathname = Astro.url.pathname;
 const categoryMatch = pathname.match(/^\/categoria\/([^/]+)/);
-const activeSlug = categoryMatch ? decodeURIComponent(categoryMatch[1]) : null;
-const todosActive = pathname === '/productos' || pathname === '/productos/';
+const catParam = Astro.url.searchParams.get('cat');
+const activeSlug = categoryMatch
+  ? decodeURIComponent(categoryMatch[1])
+  : (catParam ? decodeURIComponent(catParam) : null);
+const todosActive = (pathname === '/productos' || pathname === '/productos/') && !activeSlug;
 ---
 
 <header class="site-header" id="site-header">
@@ -35,7 +36,7 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
   </div>
 
   <nav class="category-nav" id="category-nav" aria-label="Navegación por categorías">
-    <div class="container category-scroll">
+    <div class="container category-scroll" id="header-category-scroll">
       <!-- Primary All Categories Button -->
       <button
         type="button"
@@ -57,23 +58,29 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
       </button>
 
       <!-- Quick access chip: Todos -->
-      <a href="/productos" class={todosActive ? 'cat-chip active' : 'cat-chip'} aria-current={todosActive ? 'page' : undefined}>
+      <a
+        href="/productos"
+        class={todosActive ? 'cat-chip active' : 'cat-chip'}
+        aria-current={todosActive ? 'page' : undefined}
+        data-cat-slug=""
+      >
         Todos
       </a>
 
-      <!-- Quick access main categories -->
-      {mainCategories.map((category) => (
+      <!-- Quick access categories -->
+      {categories.map((category) => (
         <a
           href={`/categoria/${category.slug}`}
           class={activeSlug === category.slug ? 'cat-chip active' : 'cat-chip'}
           aria-current={activeSlug === category.slug ? 'page' : undefined}
+          data-cat-slug={category.slug}
         >
           {category.name}
         </a>
       ))}
 
       <!-- "Más categorías" trigger button -->
-      {moreCategories.length > 0 && (
+      {categories.length > 0 && (
         <button
           type="button"
           class="cat-chip more-cats-btn"
@@ -82,7 +89,7 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
           aria-expanded="false"
           aria-label="Ver más categorías"
         >
-          <span>Más categorías (+{moreCategories.length})</span>
+          <span>Más categorías</span>
           <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <path d="m6 9 6 6 6-6"/>
           </svg>
@@ -388,3 +395,75 @@ const todosActive = pathname === '/productos' || pathname === '/productos/';
     }
   }
 </style>
+
+<script>
+  function centerActiveHeaderCategory(smooth = true) {
+    const container = document.querySelector<HTMLElement>('.category-scroll');
+    if (!container) return;
+
+    const activeChip = container.querySelector<HTMLElement>('.cat-chip.active');
+    if (!activeChip) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const chipRect = activeChip.getBoundingClientRect();
+    if (containerRect.width === 0 || chipRect.width === 0) return;
+
+    const relativeLeft = chipRect.left - containerRect.left;
+    const delta = relativeLeft + (chipRect.width / 2) - (container.clientWidth / 2);
+    const targetScrollLeft = container.scrollLeft + delta;
+    const maxScrollLeft = container.scrollWidth - container.clientWidth;
+    const clamped = Math.max(0, Math.min(targetScrollLeft, maxScrollLeft));
+
+    if (Math.abs(container.scrollLeft - clamped) > 1) {
+      container.scrollTo({
+        left: clamped,
+        behavior: smooth ? 'smooth' : 'auto',
+      });
+    }
+  }
+
+  function initHeaderCategoryScroll() {
+    const container = document.querySelector<HTMLElement>('.category-scroll');
+    if (!container) return;
+
+    // Start smooth gliding promptly
+    window.setTimeout(() => {
+      centerActiveHeaderCategory(true);
+    }, 20);
+
+    // On clicking any category chip in the bar, animate scroll immediately
+    container.querySelectorAll<HTMLElement>('.cat-chip').forEach((chip) => {
+      chip.addEventListener('click', () => {
+        const containerRect = container.getBoundingClientRect();
+        const chipRect = chip.getBoundingClientRect();
+        if (containerRect.width === 0 || chipRect.width === 0) return;
+        const relativeLeft = chipRect.left - containerRect.left;
+        const delta = relativeLeft + (chipRect.width / 2) - (container.clientWidth / 2);
+        const targetScrollLeft = container.scrollLeft + delta;
+        const maxScrollLeft = container.scrollWidth - container.clientWidth;
+        const clamped = Math.max(0, Math.min(targetScrollLeft, maxScrollLeft));
+        container.scrollTo({
+          left: clamped,
+          behavior: 'smooth',
+        });
+      });
+    });
+
+    let resizeTimer: number | undefined;
+    window.addEventListener('resize', () => {
+      window.clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(() => {
+        centerActiveHeaderCategory(false);
+      }, 100);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHeaderCategoryScroll);
+  } else {
+    initHeaderCategoryScroll();
+  }
+  window.addEventListener('load', () => centerActiveHeaderCategory(true));
+  window.addEventListener('pageshow', () => centerActiveHeaderCategory(true));
+  document.addEventListener('astro:page-load', initHeaderCategoryScroll);
+</script>

@@ -117,6 +117,14 @@ try {
       isMobile: true,
       hasTouch: true,
     });
+    await ctx.addInitScript(() => {
+      window.addEventListener('DOMContentLoaded', () => {
+        const s = document.createElement('style');
+        s.textContent = 'vite-error-overlay, astro-dev-toolbar { display: none !important; pointer-events: none !important; }';
+        document.head?.appendChild(s);
+        document.querySelectorAll('vite-error-overlay, astro-dev-toolbar').forEach((e) => e.remove());
+      });
+    });
     const page = await ctx.newPage();
     const errors = [];
     page.on('pageerror', (e) => errors.push('pageerror: ' + e.message));
@@ -303,6 +311,14 @@ try {
   // --- Escritorio ---
   console.log('\n=== Escritorio 1366x768 ===');
   const dctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+  await dctx.addInitScript(() => {
+    window.addEventListener('DOMContentLoaded', () => {
+      const s = document.createElement('style');
+      s.textContent = 'vite-error-overlay, astro-dev-toolbar { display: none !important; pointer-events: none !important; }';
+      document.head?.appendChild(s);
+      document.querySelectorAll('vite-error-overlay, astro-dev-toolbar').forEach((e) => e.remove());
+    });
+  });
   const dp = await dctx.newPage();
   const derr = [];
   dp.on('pageerror', (e) => derr.push(e.message));

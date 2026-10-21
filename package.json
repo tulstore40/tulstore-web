@@ -8,6 +8,8 @@
     "build": "astro check && astro build",
     "preview": "astro preview",
     "check": "astro check",
+    "test": "node tests/e2e/category-nav.e2e.mjs && node tests/e2e/catalog.e2e.mjs",
+    "test:nav": "node tests/e2e/category-nav.e2e.mjs",
     "test:e2e": "node tests/e2e/catalog.e2e.mjs"
   },
   "dependencies": {

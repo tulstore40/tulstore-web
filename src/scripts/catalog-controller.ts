@@ -368,22 +368,46 @@ export function initCatalog(root: HTMLElement, config: CatalogControllerConfig):
   }
 
   // Category chips
-  const syncChips = () => {
+  const scrollChipToCenter = (chip: HTMLElement, smooth = true) => {
+    const container = chip.closest<HTMLElement>('.chips-scroll');
+    if (!container) return;
+    const containerRect = container.getBoundingClientRect();
+    const chipRect = chip.getBoundingClientRect();
+    if (containerRect.width === 0 || chipRect.width === 0) return;
+    const relativeLeft = chipRect.left - containerRect.left;
+    const delta = relativeLeft + (chipRect.width / 2) - (container.clientWidth / 2);
+    const targetScrollLeft = container.scrollLeft + delta;
+    const maxScrollLeft = container.scrollWidth - container.clientWidth;
+    const clamped = Math.max(0, Math.min(targetScrollLeft, maxScrollLeft));
+    if (Math.abs(container.scrollLeft - clamped) > 1) {
+      container.scrollTo({
+        left: clamped,
+        behavior: smooth ? 'smooth' : 'auto',
+      });
+    }
+  };
+
+  const syncChips = (smoothScroll = true) => {
+    let activeChip: HTMLElement | null = null;
     for (const chip of chips) {
       const value = chip.dataset.filterChip ?? '';
       const active = (value === '' && state.cat === '') || (value !== '' && value === state.cat);
       chip.classList.toggle('active', active);
       chip.setAttribute('aria-pressed', String(active));
+      if (active) activeChip = chip;
+    }
+    if (activeChip) {
+      scrollChipToCenter(activeChip, smoothScroll);
     }
   };
 
   if (config.categoryFilter) {
     for (const chip of chips) {
       chip.addEventListener('click', () => {
-          const value = chip.dataset.filterChip ?? '';
+        const value = chip.dataset.filterChip ?? '';
         state.cat = value;
         if (catSelect) catSelect.value = state.cat;
-        syncChips();
+        syncChips(true);
         filterAndApply();
       });
     }
@@ -428,7 +452,7 @@ export function initCatalog(root: HTMLElement, config: CatalogControllerConfig):
       }
     }
     if (sortSelect && isSortKey(sortSelect.value)) state.sort = sortSelect.value;
-    syncChips();
+    syncChips(true);
     filterAndApply();
     closeSheet();
   });
@@ -442,11 +466,11 @@ export function initCatalog(root: HTMLElement, config: CatalogControllerConfig):
     if (minInput) minInput.value = '';
     if (maxInput) maxInput.value = '';
     if (sortSelect) sortSelect.value = config.defaultSort;
-    syncChips();
+    syncChips(true);
     filterAndApply();
   });
 
-  syncChips();
+  syncChips(false);
 
   // If there are initial query params, apply them immediately; otherwise preserve SSR cards and update UI
   if (state.q || state.cat || !Number.isNaN(state.min) || !Number.isNaN(state.max) || state.sort !== config.defaultSort) {

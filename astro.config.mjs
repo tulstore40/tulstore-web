@@ -7,4 +7,7 @@ export default defineConfig({
   site,
   output: 'server',
   adapter: netlify(),
+  devToolbar: {
+    enabled: false,
+  },
 });
