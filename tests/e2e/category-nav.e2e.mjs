@@ -30,7 +30,6 @@ function check(name, ok, detail = '') {
 }
 
 async function waitForScrollSettled(page, selector = '.category-scroll') {
-  // 1. Wait until scrollLeft is > 0 (for non-first items) or centered
   await page.waitForFunction(
     (sel) => {
       const container = document.querySelector(sel);
@@ -49,7 +48,6 @@ async function waitForScrollSettled(page, selector = '.category-scroll') {
     { timeout: 5000 }
   ).catch(() => {});
 
-  // 2. Extra 100ms to guarantee zero in-flight inertia
   await page.waitForTimeout(100);
 }
 
@@ -86,16 +84,41 @@ try {
 
     const page = await ctx.newPage();
 
-    // 1. Direct navigation to Mascotas (/categoria/mascotas) - one of the last categories
+    // 0. Base verification on /productos (initial state)
+    await page.goto(`${BASE}/productos`, { waitUntil: 'networkidle' });
+    const initialLeadMetrics = await page.evaluate(() => {
+      const btn = document.querySelector('.cat-lead-btn');
+      const fixedWrap = document.querySelector('.cat-lead-fixed');
+      const scrollWrap = document.querySelector('.category-scroll');
+      if (!btn || !fixedWrap || !scrollWrap) return null;
+      const bRect = btn.getBoundingClientRect();
+      const sRect = scrollWrap.getBoundingClientRect();
+      return {
+        btnLeft: bRect.left,
+        btnRight: bRect.right,
+        btnWidth: bRect.width,
+        scrollLeft: scrollWrap.scrollLeft,
+        scrollContainerLeft: sRect.left,
+        docWidth: document.documentElement.scrollWidth,
+        winWidth: window.innerWidth,
+      };
+    });
+
+    check(`[${vp.name}] Botón fijo «Todas las categorías» presente y visible a la izquierda`, initialLeadMetrics?.btnLeft >= 0 && initialLeadMetrics?.btnWidth > 50, `left=${Math.round(initialLeadMetrics?.btnLeft || 0)}px, width=${Math.round(initialLeadMetrics?.btnWidth || 0)}px`);
+    check(`[${vp.name}] Sin desbordamiento horizontal en viewport`, (initialLeadMetrics?.docWidth || 0) <= (initialLeadMetrics?.winWidth || 0) + 1, `doc=${initialLeadMetrics?.docWidth}px, win=${initialLeadMetrics?.winWidth}px`);
+
+    // 1. Direct navigation to Mascotas (/categoria/mascotas) - 11th category
     await page.goto(`${BASE}/categoria/mascotas`, { waitUntil: 'networkidle' });
     await waitForScrollSettled(page, '.category-scroll');
 
     const mascotasMetrics = await page.evaluate(() => {
       const container = document.querySelector('.category-scroll');
       const activeChip = container?.querySelector('.cat-chip.active');
-      if (!container || !activeChip) return null;
+      const btn = document.querySelector('.cat-lead-btn');
+      if (!container || !activeChip || !btn) return null;
       const cRect = container.getBoundingClientRect();
       const chipRect = activeChip.getBoundingClientRect();
+      const bRect = btn.getBoundingClientRect();
       const chipCenter = chipRect.left + chipRect.width / 2;
       const containerCenter = cRect.left + cRect.width / 2;
       return {
@@ -108,48 +131,67 @@ try {
         isFullyVisible: chipRect.left >= cRect.left - 5 && chipRect.right <= cRect.right + 5,
         centerDelta: Math.abs(chipCenter - containerCenter),
         maxScrollLeft: container.scrollWidth - container.clientWidth,
+        btnLeft: bRect.left,
+        btnRight: bRect.right,
+        btnIsVisible: bRect.left >= 0 && bRect.right <= window.innerWidth && bRect.width > 50,
+        noOverlap: bRect.right <= cRect.left + 5,
       };
     });
 
     check(`[${vp.name}] /categoria/mascotas: chip Mascotas activo`, mascotasMetrics?.hasActiveChip && mascotasMetrics.chipText.includes('Mascotas'), mascotasMetrics?.chipText);
-    check(`[${vp.name}] /categoria/mascotas: la barra horizontal se desplazó (scrollLeft > 0)`, mascotasMetrics?.scrollLeft > 50, `scrollLeft=${Math.round(mascotasMetrics?.scrollLeft || 0)}px / max=${Math.round(mascotasMetrics?.maxScrollLeft || 0)}px`);
+    check(`[${vp.name}] /categoria/mascotas: la barra de categorías se desplazó (scrollLeft > 0)`, mascotasMetrics?.scrollLeft > 50, `scrollLeft=${Math.round(mascotasMetrics?.scrollLeft || 0)}px / max=${Math.round(mascotasMetrics?.maxScrollLeft || 0)}px`);
     check(`[${vp.name}] /categoria/mascotas: botón Mascotas completamente visible`, mascotasMetrics?.isFullyVisible === true);
     check(`[${vp.name}] /categoria/mascotas: botón centrado (delta <= 25px o tope)`, mascotasMetrics?.centerDelta <= 25 || Math.abs((mascotasMetrics?.scrollLeft || 0) - (mascotasMetrics?.maxScrollLeft || 0)) <= 5, `delta=${Math.round(mascotasMetrics?.centerDelta || 0)}px`);
     check(`[${vp.name}] /categoria/mascotas: desplazamiento vertical sin cambios (scrollY = 0)`, mascotasMetrics?.scrollY === 0, `scrollY=${mascotasMetrics?.scrollY}`);
+    check(`[${vp.name}] /categoria/mascotas: botón fijo «Todas las categorías» permanece visible e inmutable a la izquierda`, mascotasMetrics?.btnIsVisible && Math.abs(mascotasMetrics.btnLeft - (initialLeadMetrics?.btnLeft || 0)) <= 2, `btnLeft=${Math.round(mascotasMetrics?.btnLeft || 0)}px`);
+    check(`[${vp.name}] /categoria/mascotas: sin superposición entre botón fijo y scroll`, mascotasMetrics?.noOverlap === true);
 
-    await page.screenshot({ path: path.join(SHOT_DIR, `nav-mascotas-${vp.name}.png`) });
+    await page.screenshot({ path: path.join(SHOT_DIR, `fixed-lead-mascotas-${vp.name}.png`) });
 
-    // 2. Navigation to the very last category: Tecnología y Electrónica
+    // 2. Navigation to the very last category: Tecnología y Electrónica (14th category)
     await page.goto(`${BASE}/categoria/tecnologia-y-electronica`, { waitUntil: 'networkidle' });
     await waitForScrollSettled(page, '.category-scroll');
 
     const tecMetrics = await page.evaluate(() => {
       const container = document.querySelector('.category-scroll');
       const activeChip = container?.querySelector('.cat-chip.active');
-      if (!container || !activeChip) return null;
+      const btn = document.querySelector('.cat-lead-btn');
+      if (!container || !activeChip || !btn) return null;
       const cRect = container.getBoundingClientRect();
       const chipRect = activeChip.getBoundingClientRect();
+      const bRect = btn.getBoundingClientRect();
       return {
         chipText: activeChip.textContent.trim(),
         scrollLeft: container.scrollLeft,
         isFullyVisible: chipRect.left >= cRect.left - 10 && chipRect.right <= cRect.right + 10,
         scrollY: window.scrollY,
+        btnLeft: bRect.left,
+        btnRight: bRect.right,
+        btnIsVisible: bRect.left >= 0 && bRect.right <= window.innerWidth && bRect.width > 50,
+        noOverlap: bRect.right <= cRect.left + 5,
       };
     });
 
     check(`[${vp.name}] /categoria/tecnologia-y-electronica: chip activo y visible`, tecMetrics?.chipText.includes('Tecnología') && tecMetrics?.isFullyVisible, tecMetrics?.chipText);
     check(`[${vp.name}] /categoria/tecnologia-y-electronica: barra desplazada hacia el final`, tecMetrics?.scrollLeft > 200, `scrollLeft=${Math.round(tecMetrics?.scrollLeft || 0)}px`);
+    check(`[${vp.name}] /categoria/tecnologia-y-electronica: botón fijo sigue 100% visible con la última categoría`, tecMetrics?.btnIsVisible && Math.abs((tecMetrics?.btnLeft || 0) - (initialLeadMetrics?.btnLeft || 0)) <= 2, `btnLeft=${Math.round(tecMetrics?.btnLeft || 0)}px`);
     check(`[${vp.name}] /categoria/tecnologia-y-electronica: scrollY = 0`, tecMetrics?.scrollY === 0);
 
-    // 3. Navigation from «Más categorías» modal
-    await page.goto(`${BASE}/productos`, { waitUntil: 'networkidle' });
-    await page.waitForTimeout(200);
+    await page.screenshot({ path: path.join(SHOT_DIR, `fixed-lead-last-category-${vp.name}.png`) });
 
-    // Open «Más categorías»
-    const moreBtn = page.locator('.more-cats-btn');
-    await moreBtn.click();
+    // 3. Click the FIXED «Todas las categorías» button -> opens modal with 14 categories
+    const leadBtn = page.locator('.cat-lead-btn');
+    await leadBtn.click();
     await page.waitForSelector('#cat-modal.is-open', { timeout: 3000 });
     await page.waitForTimeout(200);
+
+    const modalCategoriesCount = await page.evaluate(() => {
+      const modal = document.querySelector('#cat-modal');
+      const links = modal?.querySelectorAll('#cat-grid a[href^="/categoria/"]');
+      return links ? links.length : 0;
+    });
+
+    check(`[${vp.name}] Clic en botón fijo abre modal con las 14 categorías`, modalCategoriesCount >= 14, `conteo=${modalCategoriesCount}`);
 
     // Click «Mascotas» card inside modal
     const modalMascotasLink = page.locator('#cat-grid a[href="/categoria/mascotas"]');
@@ -160,9 +202,11 @@ try {
     const modalNavMetrics = await page.evaluate(() => {
       const container = document.querySelector('.category-scroll');
       const activeChip = container?.querySelector('.cat-chip.active');
-      if (!container || !activeChip) return null;
+      const btn = document.querySelector('.cat-lead-btn');
+      if (!container || !activeChip || !btn) return null;
       const cRect = container.getBoundingClientRect();
       const chipRect = activeChip.getBoundingClientRect();
+      const bRect = btn.getBoundingClientRect();
       const chipCenter = chipRect.left + chipRect.width / 2;
       const containerCenter = cRect.left + cRect.width / 2;
       const maxScroll = container.scrollWidth - container.clientWidth;
@@ -173,41 +217,32 @@ try {
         centerDelta: Math.abs(chipCenter - containerCenter),
         isAtEnd: Math.abs(container.scrollLeft - maxScroll) <= 5,
         scrollY: window.scrollY,
+        btnIsVisible: bRect.left >= 0 && bRect.right <= window.innerWidth,
       };
     });
 
-    check(`[${vp.name}] Selección desde «Más categorías»: navega a Mascotas`, modalNavMetrics?.chipText.includes('Mascotas'), modalNavMetrics?.chipText);
-    check(`[${vp.name}] Selección desde «Más categorías»: barra desplazada automáticamente`, modalNavMetrics?.scrollLeft > 50, `scrollLeft=${Math.round(modalNavMetrics?.scrollLeft || 0)}px`);
-    check(`[${vp.name}] Selección desde «Más categorías»: botón Mascotas centrado y visible`, modalNavMetrics?.isFullyVisible && (modalNavMetrics?.centerDelta <= 25 || modalNavMetrics?.isAtEnd), `visible=${modalNavMetrics?.isFullyVisible}, delta=${Math.round(modalNavMetrics?.centerDelta || 0)}px`);
-    check(`[${vp.name}] Selección desde «Más categorías»: scroll vertical inalterado`, modalNavMetrics?.scrollY === 0, `scrollY=${modalNavMetrics?.scrollY}`);
+    check(`[${vp.name}] Selección desde modal abre Mascotas`, modalNavMetrics?.chipText.includes('Mascotas'), modalNavMetrics?.chipText);
+    check(`[${vp.name}] Selección desde modal: barra desplazada y botón activo centrado`, modalNavMetrics?.scrollLeft > 50 && modalNavMetrics?.isFullyVisible, `scrollLeft=${Math.round(modalNavMetrics?.scrollLeft || 0)}px`);
+    check(`[${vp.name}] Selección desde modal: botón fijo visible a la izquierda`, modalNavMetrics?.btnIsVisible === true);
 
-    await page.screenshot({ path: path.join(SHOT_DIR, `nav-from-modal-mascotas-${vp.name}.png`) });
-
-    // 4. In-place category chips bar on /productos
-    await page.goto(`${BASE}/productos`, { waitUntil: 'networkidle' });
+    // 4. Sticky behavior check: scroll vertically and verify header stays pinned
+    await page.mouse.wheel(0, 350);
     await page.waitForTimeout(200);
 
-    const catalogGridChip = page.locator('[data-filter-chip="mascotas"]');
-    if (await catalogGridChip.count() > 0) {
-      await catalogGridChip.click();
-      await waitForScrollSettled(page, '.chips-scroll');
+    const stickyMetrics = await page.evaluate(() => {
+      const header = document.querySelector('.site-header');
+      const btn = document.querySelector('.cat-lead-btn');
+      const hRect = header?.getBoundingClientRect();
+      const bRect = btn?.getBoundingClientRect();
+      return {
+        headerTop: hRect?.top,
+        btnTop: bRect?.top,
+        btnVisible: (bRect?.top || 0) >= 0 && (bRect?.bottom || 0) <= window.innerHeight,
+        scrollY: window.scrollY,
+      };
+    });
 
-      const inPlaceMetrics = await page.evaluate(() => {
-        const container = document.querySelector('.chips-scroll');
-        const activeChip = container?.querySelector('.chip.active');
-        if (!container || !activeChip) return null;
-        const cRect = container.getBoundingClientRect();
-        const chipRect = activeChip.getBoundingClientRect();
-        return {
-          chipText: activeChip.textContent.trim(),
-          scrollLeft: container.scrollLeft,
-          isFullyVisible: chipRect.left >= cRect.left - 10 && chipRect.right <= cRect.right + 10,
-        };
-      });
-
-      check(`[${vp.name}] /productos chips-scroll: clic en Mascotas activa chip`, inPlaceMetrics?.chipText.includes('Mascotas'), inPlaceMetrics?.chipText);
-      check(`[${vp.name}] /productos chips-scroll: se desplazó y está visible`, inPlaceMetrics?.scrollLeft > 50 && inPlaceMetrics?.isFullyVisible, `scrollLeft=${Math.round(inPlaceMetrics?.scrollLeft || 0)}px, visible=${inPlaceMetrics?.isFullyVisible}`);
-    }
+    check(`[${vp.name}] Comportamiento sticky: encabezado y botón fijo permanecen visibles al hacer scroll vertical`, Math.abs(stickyMetrics?.headerTop || 0) <= 2 && stickyMetrics?.btnVisible === true, `headerTop=${Math.round(stickyMetrics?.headerTop || 0)}px, scrollY=${stickyMetrics?.scrollY}px`);
 
     await ctx.close();
   }
@@ -216,7 +251,7 @@ try {
 }
 
 console.log(`\n========================================`);
-console.log(`Resultados navegación categorías:`);
+console.log(`Resultados navegación y botón fijo:`);
 console.log(`${results.length - failed}/${results.length} comprobaciones OK; ${failed} fallidas.`);
 console.log(`========================================\n`);
 

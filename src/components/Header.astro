@@ -36,65 +36,70 @@ const todosActive = (pathname === '/productos' || pathname === '/productos/') &&
   </div>
 
   <nav class="category-nav" id="category-nav" aria-label="Navegación por categorías">
-    <div class="container category-scroll" id="header-category-scroll">
-      <!-- Primary All Categories Button -->
-      <button
-        type="button"
-        class="cat-lead-btn"
-        data-category-modal-open
-        aria-haspopup="dialog"
-        aria-expanded="false"
-        aria-label="Explorar todas las categorías"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="cat-icon">
-          <rect x="3" y="3" width="7" height="7" rx="1.5"/>
-          <rect x="14" y="3" width="7" height="7" rx="1.5"/>
-          <rect x="14" y="14" width="7" height="7" rx="1.5"/>
-          <rect x="3" y="14" width="7" height="7" rx="1.5"/>
-        </svg>
-        <span class="cat-lead-text-desktop">Todas las categorías</span>
-        <span class="cat-lead-text-mobile">Categorías</span>
-        <span class="cat-lead-badge">{categories.length}</span>
-      </button>
-
-      <!-- Quick access chip: Todos -->
-      <a
-        href="/productos"
-        class={todosActive ? 'cat-chip active' : 'cat-chip'}
-        aria-current={todosActive ? 'page' : undefined}
-        data-cat-slug=""
-      >
-        Todos
-      </a>
-
-      <!-- Quick access categories -->
-      {categories.map((category) => (
-        <a
-          href={`/categoria/${category.slug}`}
-          class={activeSlug === category.slug ? 'cat-chip active' : 'cat-chip'}
-          aria-current={activeSlug === category.slug ? 'page' : undefined}
-          data-cat-slug={category.slug}
-        >
-          {category.name}
-        </a>
-      ))}
-
-      <!-- "Más categorías" trigger button -->
-      {categories.length > 0 && (
+    <div class="container category-nav-inner">
+      <!-- Fixed Lead Button: "Todas las categorías" (Always visible on the left) -->
+      <div class="cat-lead-fixed">
         <button
           type="button"
-          class="cat-chip more-cats-btn"
+          class="cat-lead-btn"
           data-category-modal-open
           aria-haspopup="dialog"
           aria-expanded="false"
-          aria-label="Ver más categorías"
+          aria-label="Explorar todas las categorías"
         >
-          <span>Más categorías</span>
-          <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-            <path d="m6 9 6 6 6-6"/>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" class="cat-icon">
+            <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+            <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+            <rect x="14" y="14" width="7" height="7" rx="1.5"/>
+            <rect x="3" y="14" width="7" height="7" rx="1.5"/>
           </svg>
+          <span class="cat-lead-text-desktop">Todas las categorías</span>
+          <span class="cat-lead-text-mobile">Categorías</span>
+          <span class="cat-lead-badge">{categories.length}</span>
         </button>
-      )}
+      </div>
+
+      <!-- Independently scrollable category chips -->
+      <div class="category-scroll" id="header-category-scroll">
+        <!-- Quick access chip: Todos -->
+        <a
+          href="/productos"
+          class={todosActive ? 'cat-chip active' : 'cat-chip'}
+          aria-current={todosActive ? 'page' : undefined}
+          data-cat-slug=""
+        >
+          Todos
+        </a>
+
+        <!-- Quick access categories -->
+        {categories.map((category) => (
+          <a
+            href={`/categoria/${category.slug}`}
+            class={activeSlug === category.slug ? 'cat-chip active' : 'cat-chip'}
+            aria-current={activeSlug === category.slug ? 'page' : undefined}
+            data-cat-slug={category.slug}
+          >
+            {category.name}
+          </a>
+        ))}
+
+        <!-- "Más categorías" trigger button -->
+        {categories.length > 0 && (
+          <button
+            type="button"
+            class="cat-chip more-cats-btn"
+            data-category-modal-open
+            aria-haspopup="dialog"
+            aria-expanded="false"
+            aria-label="Ver más categorías"
+          >
+            <span>Más categorías</span>
+            <svg class="chevron-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="m6 9 6 6 6-6"/>
+            </svg>
+          </button>
+        )}
+      </div>
     </div>
   </nav>
 
@@ -227,13 +232,44 @@ const todosActive = (pathname === '/productos' || pathname === '/productos/') &&
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     border-bottom: 1px solid var(--line);
   }
+  .category-nav-inner {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+
+  /* Fixed Lead Button: "Todas las categorías" */
+  .cat-lead-fixed {
+    flex: none;
+    display: flex;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+    padding-right: 8px;
+  }
+  .cat-lead-fixed::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 15%;
+    bottom: 15%;
+    width: 1px;
+    background: var(--line);
+  }
+
+  /* Independently scrollable category chips */
   .category-scroll {
+    flex: 1 1 auto;
+    min-width: 0;
     display: flex;
     align-items: center;
     flex-wrap: nowrap;
     gap: 6px;
-    padding-top: 5px;
-    padding-bottom: 5px;
+    padding-top: 1px;
+    padding-bottom: 1px;
     overflow-x: auto;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
@@ -247,6 +283,7 @@ const todosActive = (pathname === '/productos' || pathname === '/productos/') &&
     flex: none;
     display: inline-flex;
     align-items: center;
+    white-space: nowrap;
     gap: 7px;
     background: #ffffff;
     border: 1.5px solid var(--teal);
@@ -373,15 +410,24 @@ const todosActive = (pathname === '/productos' || pathname === '/productos/') &&
       font-size: 0.68rem;
     }
 
-    .category-scroll {
-      gap: 5px;
+    .category-nav-inner {
+      gap: 6px;
       padding-top: 4px;
       padding-bottom: 4px;
+    }
+    .cat-lead-fixed {
+      padding-right: 6px;
+    }
+    .category-scroll {
+      gap: 5px;
+      padding-top: 1px;
+      padding-bottom: 1px;
     }
     .cat-lead-btn {
       padding: 4px 8px;
       font-size: 0.74rem;
       gap: 5px;
+      white-space: nowrap;
     }
     .cat-lead-text-desktop {
       display: none;
